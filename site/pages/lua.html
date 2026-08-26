@@ -1,0 +1,27 @@
+      <h1>Lua basics</h1>
+      <p>You only need a small amount of Lua to start making simple mods.</p>
+
+      <h2>Values</h2>
+      <pre><code>local speed = 25
+local enabled = true
+local name = "boost"
+local nothing = nil</code></pre>
+      <p><code>local</code> creates a variable for the current script. <code>nil</code> means there is no value.</p>
+
+      <h2>Conditions</h2>
+      <pre><code>if speed &gt; 20 then
+    print("fast")
+end</code></pre>
+
+      <h2>Functions</h2>
+      <pre><code>local function boost(amount)
+    local sled = sledders.player.getSled()
+    if sled then
+        sled.addVel(0, 0, amount)
+    end
+end</code></pre>
+
+      <h2>Tables</h2>
+      <p>Positions and velocities are tables with values such as <code>x</code>, <code>y</code>, and <code>z</code>.</p>
+      <pre><code>local pos = sled.getPos()
+print(pos.x, pos.y, pos.z)</code></pre>

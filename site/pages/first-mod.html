@@ -1,0 +1,18 @@
+      <h1>Make your first mod</h1>
+      <p>Start with a working example and change one thing.</p>
+
+      <ol>
+        <li>Open <code>SleddersLua/Examples</code>.</li>
+        <li>Copy <code>ForwardBoost.lua</code> into <code>LuaMods</code>.</li>
+        <li>Rename it to <code>MyBoost.lua</code>.</li>
+        <li>Open it in a text editor.</li>
+        <li>Change the boost number and save.</li>
+      </ol>
+
+      <pre><code>sledders.input.onPressed("space", function()
+    local sled = sledders.player.getSled()
+    if not sled then return end
+    sled.addVel(0, 0, 25)
+end)</code></pre>
+
+      <p>Change <code>25</code>, save the file, and test again. If the script has an error, the MelonLoader console normally shows the file and line.</p>

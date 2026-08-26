@@ -1,0 +1,17 @@
+      <h1>Callbacks</h1>
+      <p>Callbacks are functions the runtime calls for you. Define only the ones your mod needs.</p>
+
+      <pre><code>function onLoad()
+end
+
+function onTick(dt)
+end
+
+function onDraw()
+end
+
+function onKey(key)
+end</code></pre>
+
+      <p><code>dt</code> is elapsed time in seconds. Use <code>onTick</code> for normal repeated logic and <code>onDraw</code> for screen drawing.</p>
+      <p>If a repeating callback throws an error, that callback is suspended until the mod reloads instead of filling the console every frame.</p>

@@ -1,0 +1,181 @@
+SLEDDERS LUA API 3.1
+
+CALLBACKS
+  onLoad()
+  onUnload(reason)
+  onTick(dt)
+  onFixedTick(dt)
+  onLateTick(dt)
+  onDraw()
+  onKey(key)
+  onSledReady()
+  onSledChanged()
+  onSledLost()
+  onSceneLoaded(index, name)
+  onSceneInitialized(index, name)
+  onSceneUnloaded(index, name)
+
+PLAYER  sledders.player
+  getSled() -> Sled|nil
+  hasSled() -> bool
+  getPos() -> Vector3|nil
+  getRot() -> Vector3|nil
+  getSpeed() -> Number|nil
+
+
+SLED
+  getName() -> String
+  isValid() -> bool
+  getPos() -> Vector3|nil
+  getRot() -> Vector3|nil
+  getVel() -> Vector3|nil
+  getWorldVel() -> Vector3|nil
+  getForwardSpeed() -> Number|nil
+  getSpeed() -> Number|nil
+  getMass() -> Number|nil
+  getRPM() -> Number|nil
+  getThrottle() -> Number|nil
+  isEngineOn() -> bool|nil
+  getFuel() -> Number|nil
+  getFuelCapacity() -> Number|nil
+  getFuelPercent() -> Number|nil
+  isFuelEmpty() -> bool|nil
+  getHeadlights() -> bool|nil
+  areHeadlightsForced() -> bool
+
+  setPos(Vector3) -> bool
+  setPos(x, y, z) -> bool
+  setVel(Vector3) -> bool
+  setVel(right, up, forward) -> bool
+  setWorldVel(Vector3) -> bool
+  setWorldVel(x, y, z) -> bool
+  setMass(kg) -> bool
+  setFuel(litres) -> bool
+  setEngineOn(enabled) -> bool
+  setHeadlights(enabled) -> bool
+
+  teleport(Vector3) -> bool
+  teleport(x, y, z) -> bool
+  addVel(Vector3) -> bool
+  addVel(right, up, forward) -> bool
+  addWorldVel(Vector3) -> bool
+  addWorldVel(x, y, z) -> bool
+  addForce(Vector3) -> bool
+  addForce(right, up, forward) -> bool
+  addWorldForce(Vector3) -> bool
+  addWorldForce(x, y, z) -> bool
+  addFuel(litres) -> bool
+  fillFuel() -> bool
+  startEngine() -> bool
+  stopEngine() -> bool
+  toggleHeadlights() -> bool
+  forceHeadlights(enabled) -> bool
+  releaseHeadlights() -> bool
+
+SLEDS  sledders.sled
+  getAll(max?) -> Array<Sled>
+
+CAMERA  sledders.camera
+  getFov() -> Number|nil
+  getPos() -> Vector3|nil
+  getRot() -> Vector3|nil
+
+  setFov(degrees) -> bool
+
+INPUT  sledders.input
+  wasPressed(key) -> bool
+  isDown(key) -> bool
+  getAxis(name) -> Number
+
+  onPressed(key, callback) -> Number
+  off(handle) -> bool
+
+SCREEN  sledders.screen
+  getWidth() -> Number
+  getHeight() -> Number
+  isAvailable() -> bool
+
+  setColor(r, g, b, a?) -> bool
+  setColor(color) -> bool
+  resetColor() -> bool
+
+  rectangle(x, y, w, h) -> bool
+  box(x, y, w, h, text?) -> bool
+  line(x1, y1, x2, y2, thickness?) -> bool
+  circle(x, y, radius, segments?, thickness?) -> bool
+  triangle(x1, y1, x2, y2, x3, y3, thickness?) -> bool
+  poly(points, thickness?) -> bool
+  print(text, x, y, w?, h?) -> bool
+
+WINDOW  sledders.window
+  getWidth() -> Number
+  getHeight() -> Number
+  getResolution() -> Table
+  isFocused() -> bool|nil
+
+TIME  sledders.time
+  getDelta() -> Number
+  getFixedDelta() -> Number
+  getDeltaMs() -> Number
+  getFixedDeltaMs() -> Number
+  getFPS() -> Number
+  getUptime() -> Number
+
+GAME  sledders.game
+  getVersion() -> String
+  getScene() -> String
+
+AUDIO  sledders.audio
+  getVolume() -> Number|nil
+  setVolume(volume) -> bool
+
+STORAGE  sledders.storage
+  get(key, default?) -> Any
+  set(key, value) -> bool
+  delete(key) -> bool
+  save() -> bool
+
+LOG  sledders.log
+  info(...) -> nil
+  warn(...) -> nil
+  error(...) -> nil
+
+VALUES
+  sledders.vector3(x, y, z) -> Vector3
+  sledders.color(r, g, b, a?) -> Table
+
+API  sledders.api
+  version : String
+  runtimeVersion : String
+
+MOD  sledders.mod
+  id : String
+  name : String
+  version : String
+  author : String
+
+DEV  sledders.dev
+  type(nameOrQuery) -> Type|nil
+  types(query, max?) -> Array<Type>
+  objects(query, max?) -> Array<Object>
+
+TYPE
+  name : String
+  fullName : String
+  assembly : String
+
+  members(filter?, max?) -> Array
+  get(member) -> Any
+  set(member, value) -> bool
+  call(method, ...) -> Any
+
+OBJECT
+  typeName() -> String
+  name() -> String|nil
+
+  members(filter?) -> Array
+  get(member) -> Any
+  set(member, value) -> bool
+  call(method, ...) -> Any
+  components(query?) -> Array
+  dump(filter?) -> String

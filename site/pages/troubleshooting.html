@@ -1,0 +1,19 @@
+      <h1>Troubleshooting</h1>
+
+      <h2>The runtime does not appear in MelonLoader</h2>
+      <p>Check that <code>Mods/SleddersLuaRuntime.dll</code> exists and that MelonLoader itself is working.</p>
+
+      <h2>MoonSharp is missing</h2>
+      <p>Check <code>UserLibs/MoonSharp.Interpreter.dll</code>. Re-extract the runtime release if it is missing.</p>
+
+      <h2>My script does not load</h2>
+      <p>A single-file mod must end in <code>.lua</code> and sit directly in <code>LuaMods</code>. A folder mod must contain <code>main.lua</code>.</p>
+
+      <h2>I saved broken Lua</h2>
+      <p>A syntax error during hot reload leaves the last working copy running. Fix the file and save it again.</p>
+
+      <h2>A callback stopped running</h2>
+      <p>Check the MelonLoader console. A callback that throws an error is suspended until the script reloads.</p>
+
+      <h2>A binding broke after a Sledders update</h2>
+      <p>Include the Sledders version and MelonLoader log in the bug report.</p>

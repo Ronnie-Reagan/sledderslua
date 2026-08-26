@@ -1,0 +1,15 @@
+      <h1>Sledders Lua</h1>
+      <p>Write Sledders mods as Lua scripts. A mod can be one text file, and changed scripts reload while the game is running.</p>
+
+      <div class="cards">
+        <div class="card"><strong>New to coding?</strong><a href="first-mod.html">Make your first mod</a>.</div>
+        <div class="card"><strong>Installing?</strong><a href="install.html">Install the runtime</a>, then <a href="mods.html">install Lua mods</a>.</div>
+        <div class="card"><strong>Already know Lua?</strong>Use the <a href="api.html">API reference</a> and <a href="examples.html">examples</a>.</div>
+      </div>
+
+      <h2>Basic idea</h2>
+      <pre><code>local sled = sledders.player.getSled()
+if sled then
+    sled.addVel(0, 0, 25)
+end</code></pre>
+      <p>The runtime handles the Sledders and Unity details behind that API. Lua mods do not need their own C# project or DLL.</p>

@@ -1,0 +1,107 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nightly-release
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Skip if the last nightly used this commit
+        id: changed
+        shell: pwsh
+        run: |
+          $latest = git ls-remote --tags origin "refs/tags/nightly-*" |
+            ForEach-Object {
+              $parts = $_ -split "\s+", 2
+              if ($parts.Count -eq 2) {
+                [pscustomobject]@{ Sha = $parts[0]; Tag = ($parts[1] -replace '^refs/tags/', '') }
+              }
+            } |
+            Sort-Object Tag |
+            Select-Object -Last 1
+
+          if ($latest -and $latest.Sha -eq $env:GITHUB_SHA) {
+            "skip=true" >> $env:GITHUB_OUTPUT
+            Write-Host "Latest nightly already points at this commit ($($latest.Tag))."
+          } else {
+            "skip=false" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Set up Python
+        if: steps.changed.outputs.skip != 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+
+      - name: Set up .NET
+        if: steps.changed.outputs.skip != 'true'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set nightly version
+        if: steps.changed.outputs.skip != 'true'
+        id: version
+        shell: pwsh
+        run: |
+          $base = (python tools/version.py base).Trim()
+          $now = (Get-Date).ToUniversalTime()
+          $date = $now.ToString("yyyyMMdd")
+          $time = $now.ToString("HHmm")
+          $short = $env:GITHUB_SHA.Substring(0, 7)
+          $version = "$base-nightly.$date.$time.$short"
+          $tag = "nightly-$date-$time-$short"
+          python tools/version.py set $version
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "date=$date" >> $env:GITHUB_OUTPUT
+          "time=$time" >> $env:GITHUB_OUTPUT
+
+      - name: Build
+        if: steps.changed.outputs.skip != 'true'
+        shell: pwsh
+        run: ./scripts/build.ps1
+
+      - name: Check Lua syntax
+        if: steps.changed.outputs.skip != 'true'
+        run: dotnet run --project tools/LuaSyntaxCheck/LuaSyntaxCheck.csproj --configuration Release -- examples tests/manual
+
+      - name: Package
+        if: steps.changed.outputs.skip != 'true'
+        shell: pwsh
+        run: ./scripts/package.ps1 -Version "${{ steps.version.outputs.version }}"
+
+      - name: Publish nightly
+        if: steps.changed.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.version.outputs.tag }}"
+          $zip = Get-ChildItem artifacts/SleddersLuaRuntime-*.zip | Select-Object -First 1
+          $sha = Get-ChildItem artifacts/SleddersLuaRuntime-*.zip.sha256 | Select-Object -First 1
+
+          git tag $tag $env:GITHUB_SHA
+          git push origin "refs/tags/$tag"
+          if ($LASTEXITCODE -ne 0) { throw "Nightly tag push failed." }
+
+          $notes = "Automated development build from commit $env:GITHUB_SHA. Nightlies are for testing current changes; use a versioned release when you need a fixed build."
+          gh release create $tag $zip.FullName $sha.FullName --verify-tag --prerelease --title "Nightly ${{ steps.version.outputs.date }} ${{ steps.version.outputs.time }} UTC ($($env:GITHUB_SHA.Substring(0, 7)))" --notes $notes
+          if ($LASTEXITCODE -ne 0) { throw "Nightly release creation failed." }

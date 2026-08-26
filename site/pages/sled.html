@@ -1,0 +1,20 @@
+      <h1>Sled</h1>
+      <p>Get the local player's sled from <code>sledders.player</code>.</p>
+
+      <pre><code>local sled = sledders.player.getSled()
+if not sled then return end</code></pre>
+
+      <h2>Movement</h2>
+      <p><code>getVel</code>, <code>setVel</code>, <code>addVel</code>, and <code>addForce</code> use sled-local axes:</p>
+      <pre><code>X = right
+Y = up
+Z = forward</code></pre>
+      <p>Methods containing <code>WorldVel</code> or <code>WorldForce</code> use fixed world axes.</p>
+
+      <h2>Position</h2>
+      <p><code>setPos</code> and <code>teleport</code> move the live sled through the game's movement/respawn path when that binding is available.</p>
+
+      <h2>Headlights</h2>
+      <p><code>setHeadlights</code> and <code>toggleHeadlights</code> change the normal game state once. <code>forceHeadlights</code> keeps an override active until <code>releaseHeadlights</code>.</p>
+
+      <p>See the <a href="api.html">API reference</a> for the full function list.</p>

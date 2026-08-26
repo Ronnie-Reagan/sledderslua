@@ -1,0 +1,8 @@
+      <h1>Storage</h1>
+      <p>Each mod can keep small values in its own JSON storage file.</p>
+
+      <pre><code>local best = sledders.storage.get("best", 0)
+sledders.storage.set("best", 123.4)</code></pre>
+
+      <p>Writes are delayed briefly so repeated calls to <code>set</code> do not write to disk every frame. <code>storage.save()</code> forces an immediate save.</p>
+      <p>Plain tables and the runtime's vector/color tables can be stored. Functions and developer object handles cannot.</p>

@@ -1,0 +1,12 @@
+      <h1>Input</h1>
+      <p>Register a function for a specific key:</p>
+
+      <pre><code>sledders.input.onPressed("h", function()
+    print("H pressed")
+end)</code></pre>
+
+      <p>Chords use <code>+</code>:</p>
+      <pre><code>sledders.input.onPressed("ctrl+h", function()
+end)</code></pre>
+
+      <p>A plain <code>h</code> binding does not also fire for <code>Ctrl+H</code>. Use <code>isDown</code> for held keys and <code>onKey(key)</code> when a script wants to see all newly pressed keys.</p>

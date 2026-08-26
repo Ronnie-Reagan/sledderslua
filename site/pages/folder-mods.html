@@ -1,0 +1,20 @@
+      <h1>Folder mods</h1>
+      <p>Use a folder when a mod grows beyond one Lua file.</p>
+
+      <pre><code>LuaMods/MyMod/
+  manifest.lua
+  main.lua
+  helpers.lua</code></pre>
+
+      <p><code>main.lua</code> can load another file with:</p>
+      <pre><code>local helpers = require("helpers")</code></pre>
+
+      <h2>Manifest</h2>
+      <pre><code>return {
+    id = "author.my-mod",
+    name = "My Mod",
+    version = "1.0.0",
+    api = "3.1"
+}</code></pre>
+
+      <p>Normal APIs need no permission list. Add <code>permissions = { "dev" }</code> only for scripts that use the developer reflection API.</p>
