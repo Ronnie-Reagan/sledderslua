@@ -592,6 +592,25 @@ namespace SleddersLuaRuntime.Api
                     m.GetParameters()[0].ParameterType == typeof(Type));
         }
 
+        private static PropertyInfo? FindProperty(Type type, string name, BindingFlags flags)
+        {
+            PropertyInfo[] properties = type.GetProperties(flags);
+            return properties.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.Ordinal))
+                ?? properties.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static FieldInfo? FindField(Type type, string name, BindingFlags flags)
+        {
+            FieldInfo[] fields = type.GetFields(flags);
+            return fields.FirstOrDefault(f => string.Equals(f.Name, name, StringComparison.Ordinal))
+                ?? fields.FirstOrDefault(f => string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool Matches(string value, string filter)
+        {
+            return string.IsNullOrEmpty(filter) || Compat.Contains(value, filter, StringComparison.OrdinalIgnoreCase);
+        }
+
         private static int ScoreType(Type type, string query)
         {
             string name = type.Name;

@@ -752,7 +752,7 @@ namespace SleddersLuaRuntime.Api
                 return null;
 
             double? capacity = GetFuelCapacity(sled);
-            if (UsesNormalizedFuel(sled, raw.Value, capacity))
+            if (capacity.HasValue && UsesNormalizedFuel(sled, raw.Value, capacity.Value))
                 return raw.Value * capacity.Value;
             return raw.Value;
         }
@@ -789,7 +789,7 @@ namespace SleddersLuaRuntime.Api
 
             double nativeAmount = litres;
             double? currentRaw = GetNativeFuel(sled);
-            if (capacity.HasValue && UsesNormalizedFuel(sled, currentRaw ?? 1.0, capacity))
+            if (capacity.HasValue && UsesNormalizedFuel(sled, currentRaw ?? 1.0, capacity.Value))
                 nativeAmount = capacity.Value <= 0.0 ? 0.0 : litres / capacity.Value;
 
             if (TryCallAny(sled, new[] { "SetFuel" }, new object?[] { nativeAmount }, out _))
@@ -811,16 +811,16 @@ namespace SleddersLuaRuntime.Api
             return TryGetAnyOrGetter(sled, out object? value, FuelMembers) ? ToDouble(value) : null;
         }
 
-        private static bool UsesNormalizedFuel(object sled, double raw, double? capacity)
+        private static bool UsesNormalizedFuel(object sled, double raw, double capacity)
         {
-            if (!capacity.HasValue || capacity.Value <= 1.5)
+            if (capacity <= 1.5)
                 return false;
 
             // Fuel is normalized in the controller; Lua exposes litres.
             if (string.Equals(sled.GetType().Name, "SnowmobileController", StringComparison.OrdinalIgnoreCase))
                 return raw >= -0.001 && raw <= 1.001;
 
-            return raw >= -0.001 && raw <= 1.001 && capacity.Value >= 5.0;
+            return raw >= -0.001 && raw <= 1.001 && capacity >= 5.0;
         }
 
         public static double? GetRpm(object sled)

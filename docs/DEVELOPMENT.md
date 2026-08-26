@@ -73,4 +73,6 @@ The Pages workflow builds `site/pages` with `tools/build_site.py`. Preview it lo
 pwsh ./scripts/serve-docs.ps1
 ```
 
+GitHub Pages must be enabled once per repository under **Settings > Pages > Source: GitHub Actions**. Until then, the Pages workflow still builds the site but skips deployment instead of failing.
+
 For the public repository named `sledderslua`, the project site can live at `https://donreagan.ca/sledderslua/` when `donreagan.ca` is already the custom domain of the owning GitHub Pages user/organization site. The project itself does not need a `CNAME` file in that setup.
