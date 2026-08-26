@@ -40,8 +40,14 @@ jobs:
             Select-Object -Last 1
 
           if ($latest -and $latest.Sha -eq $env:GITHUB_SHA) {
-            "skip=true" >> $env:GITHUB_OUTPUT
-            Write-Host "Latest nightly already points at this commit ($($latest.Tag))."
+            & gh release view $latest.Tag --json tagName 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+              "skip=true" >> $env:GITHUB_OUTPUT
+              Write-Host "Latest nightly release already points at this commit ($($latest.Tag))."
+            } else {
+              "skip=false" >> $env:GITHUB_OUTPUT
+              Write-Host "Found nightly tag $($latest.Tag) for this commit without a release; retrying publication."
+            }
           } else {
             "skip=false" >> $env:GITHUB_OUTPUT
           }
@@ -98,10 +104,27 @@ jobs:
           $zip = Get-ChildItem artifacts/SleddersLuaRuntime-*.zip | Select-Object -First 1
           $sha = Get-ChildItem artifacts/SleddersLuaRuntime-*.zip.sha256 | Select-Object -First 1
 
-          git tag $tag $env:GITHUB_SHA
-          git push origin "refs/tags/$tag"
-          if ($LASTEXITCODE -ne 0) { throw "Nightly tag push failed." }
+          $tagPushed = $false
+          $releaseCreated = $false
+          try {
+            git tag $tag $env:GITHUB_SHA
+            if ($LASTEXITCODE -ne 0) { throw "Nightly local tag creation failed." }
 
-          $notes = "Automated development build from commit $env:GITHUB_SHA. Nightlies are for testing current changes; use a versioned release when you need a fixed build."
-          gh release create $tag $zip.FullName $sha.FullName --verify-tag --prerelease --title "Nightly ${{ steps.version.outputs.date }} ${{ steps.version.outputs.time }} UTC ($($env:GITHUB_SHA.Substring(0, 7)))" --notes $notes
-          if ($LASTEXITCODE -ne 0) { throw "Nightly release creation failed." }
+            git push origin "refs/tags/$tag"
+            if ($LASTEXITCODE -ne 0) { throw "Nightly tag push failed." }
+            $tagPushed = $true
+
+            $notes = "Automated development build from commit $env:GITHUB_SHA. Nightlies are for testing current changes; use a versioned release when you need a fixed build."
+            gh release create $tag $zip.FullName $sha.FullName --verify-tag --prerelease --title "Nightly ${{ steps.version.outputs.date }} ${{ steps.version.outputs.time }} UTC ($($env:GITHUB_SHA.Substring(0, 7)))" --notes $notes
+            if ($LASTEXITCODE -ne 0) { throw "Nightly release creation failed." }
+            $releaseCreated = $true
+          } finally {
+            if ($tagPushed -and -not $releaseCreated) {
+              Write-Warning "Nightly release failed after tag push; removing remote tag $tag so the commit can be retried."
+              git push origin ":refs/tags/$tag" 2>$null
+              if ($LASTEXITCODE -ne 0) {
+                Write-Warning "Could not remove stale remote nightly tag $tag."
+              }
+              git tag -d $tag 2>$null | Out-Null
+            }
+          }

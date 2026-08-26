@@ -33,6 +33,66 @@ $stage = Join-Path $OutputDirectory ".stage-$([guid]::NewGuid().ToString('N'))"
 $zip = Join-Path $OutputDirectory "SleddersLuaRuntime-$Version.zip"
 $checksum = "$zip.sha256"
 
+function Assert-ArchiveMatchesStage {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$StageDirectory,
+        [Parameter(Mandatory = $true)]
+        [string]$ArchivePath
+    )
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    $expected = @{}
+    foreach ($file in Get-ChildItem -LiteralPath $StageDirectory -Recurse -File) {
+        $relative = [IO.Path]::GetRelativePath($StageDirectory, $file.FullName).Replace('\', '/')
+        $expected[$relative] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+
+    $archive = [IO.Compression.ZipFile]::OpenRead($ArchivePath)
+    try {
+        $actual = @{}
+        foreach ($entry in $archive.Entries) {
+            if ([string]::IsNullOrEmpty($entry.Name)) { continue }
+
+            $relative = $entry.FullName.Replace('\', '/')
+            if ($actual.ContainsKey($relative)) {
+                throw "Packaging guard: duplicate archive entry '$relative'."
+            }
+            $actual[$relative] = $entry
+        }
+
+        $missing = @($expected.Keys | Where-Object { -not $actual.ContainsKey($_) } | Sort-Object)
+        $unexpected = @($actual.Keys | Where-Object { -not $expected.ContainsKey($_) } | Sort-Object)
+        if ($missing.Count -gt 0 -or $unexpected.Count -gt 0) {
+            $parts = @()
+            if ($missing.Count -gt 0) { $parts += "missing: $($missing -join ', ')" }
+            if ($unexpected.Count -gt 0) { $parts += "unexpected: $($unexpected -join ', ')" }
+            throw "Packaging guard: archive file list does not match the staged release tree ($($parts -join '; '))."
+        }
+
+        foreach ($relative in $expected.Keys) {
+            $entry = $actual[$relative]
+            $stream = $entry.Open()
+            $sha256 = [Security.Cryptography.SHA256]::Create()
+            try {
+                $entryHash = [BitConverter]::ToString($sha256.ComputeHash($stream)).Replace('-', '').ToLowerInvariant()
+            } finally {
+                $sha256.Dispose()
+                $stream.Dispose()
+            }
+
+            if ($entryHash -ne $expected[$relative]) {
+                throw "Packaging guard: archive content differs from staged file '$relative'."
+            }
+        }
+    } finally {
+        $archive.Dispose()
+    }
+
+    Write-Host "Verified release archive: $($expected.Count) files match the staged release tree."
+}
+
 try {
     New-Item -ItemType Directory -Force -Path (Join-Path $stage "Mods"), (Join-Path $stage "UserLibs"), (Join-Path $stage "LuaMods"), (Join-Path $stage "SleddersLua/Examples"), (Join-Path $stage "SleddersLua/third_party") | Out-Null
 
@@ -54,6 +114,7 @@ try {
 
     if (Test-Path $zip) { Remove-Item $zip -Force }
     Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -CompressionLevel Optimal
+    Assert-ArchiveMatchesStage -StageDirectory $stage -ArchivePath $zip
 
     $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $([IO.Path]::GetFileName($zip))" | Set-Content -Path $checksum -Encoding ascii

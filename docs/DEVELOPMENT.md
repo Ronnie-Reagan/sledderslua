@@ -61,6 +61,17 @@ After a stable release, set the next development version, for example:
 python tools/version.py set 0.5.0-dev
 ```
 
+## Release gate
+
+Before cutting an RC or stable tag:
+
+1. Require green CI on the exact commit being released. The package dry run must complete; scripts/package.ps1 verifies that the ZIP file list and every archived file hash match the staged release tree.
+2. Run tests/manual/RuntimeSmokeTest.lua on the current Sledders build and require a fully passing Ctrl+Shift+5 safe API sweep.
+3. Run the permissioned tests/manual/DevSmokeTest folder test and require the read-only Ctrl+Shift+9 reflection sweep to pass.
+4. Only then set the release version, commit it, and create an RC or stable tag from that tested commit.
+
+A green build is not a substitute for the two in-game smoke tests; runtime reflection bindings can only be validated against the current game assemblies and live objects.
+
 ## Nightly
 
 `nightly.yml` runs daily and can also be started manually. When `main` has changed since the last nightly it creates a dated prerelease such as `nightly-20260826-1015-12abc34`. Previous nightlies are left intact.
