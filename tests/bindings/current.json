@@ -1,0 +1,83 @@
+{
+  "types": [
+    {
+      "name": "Controller",
+      "fields": [],
+      "methods": [
+        { "name": "get_Instance", "parameterCount": 0 },
+        { "name": "get_SnowmobileController", "parameterCount": 0 },
+        { "name": "RequestGamePositionChange", "parameterCount": 1 }
+      ]
+    },
+    {
+      "name": "NetClient",
+      "fields": [],
+      "methods": [
+        { "name": "get_Instance", "parameterCount": 0 },
+        { "name": "get_LocalPlayer", "parameterCount": 0 },
+        { "name": "get_LocalClientId", "parameterCount": 0 },
+        { "name": "GetAllPlayersIncludingLocalPlayer", "parameterCount": 0 },
+        { "name": "GetPlayer", "parameterCount": 1 }
+      ]
+    },
+    {
+      "name": "SnowmobileController",
+      "fields": [
+        "controllerBase",
+        "isEngineOn",
+        "isHeadlightOn",
+        "GJKCDNOBELI"
+      ],
+      "methods": [
+        { "name": "get_Fuel", "parameterCount": 0 },
+        { "name": "get_FuelCapacity", "parameterCount": 0 },
+        { "name": "SetFuel", "parameterCount": 1 },
+        { "name": "AddFuel", "parameterCount": 1 },
+        { "name": "get_Rpm", "parameterCount": 0 },
+        { "name": "get_RpmForSpeedoMeter", "parameterCount": 0 },
+        { "name": "get_SnowmobileVelocity", "parameterCount": 0 },
+        { "name": "get_SnowmobileSpeedForSpeedoMeter", "parameterCount": 0 },
+        { "name": "SetEngineOnOff", "parameterCount": 1 },
+        { "name": "get_Vehicle", "parameterCount": 0 }
+      ]
+    },
+    {
+      "name": "SnowmobileControllerBase",
+      "fields": [
+        "mainBody",
+        "respawnable",
+        "headLightController",
+        "MONBCLKFJPG"
+      ],
+      "methods": []
+    },
+    {
+      "name": "VehicleScriptableObject",
+      "fields": [
+        "displayName",
+        "weight",
+        "horsePower",
+        "maxRpm",
+        "fuelCapacity",
+        "fuelConsumption"
+      ],
+      "methods": []
+    },
+    {
+      "name": "Respawnable",
+      "fields": [],
+      "methods": [
+        { "name": "Respawn", "parameterCount": 2 },
+        { "name": "Respawn", "parameterCount": 3 },
+        { "name": "InitialSpawn", "parameterCount": 2 }
+      ]
+    },
+    {
+      "name": "SnowmobileStructure",
+      "fields": [],
+      "methods": [
+        { "name": "SetHeadlightEmission", "parameterCount": 1 }
+      ]
+    }
+  ]
+}
