@@ -33,7 +33,8 @@ SLED
   getForwardSpeed() -> Number|nil
   getSpeed() -> Number|nil
   getMass() -> Number|nil
-  getRPM() -> Number|nil
+  getRpm() -> Number|nil
+  getRPM() -> Number|nil  compatibility alias
   getThrottle() -> Number|nil
   isEngineOn() -> bool|nil
   getFuel() -> Number|nil
@@ -118,7 +119,8 @@ TIME  sledders.time
   getFixedDelta() -> Number
   getDeltaMs() -> Number
   getFixedDeltaMs() -> Number
-  getFPS() -> Number
+  getFps() -> Number
+  getFPS() -> Number  compatibility alias
   getUptime() -> Number
 
 GAME  sledders.game
