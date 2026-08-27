@@ -90,6 +90,12 @@ namespace SleddersLuaRuntime.Core
             _scriptObjectCache[kind + ":" + handle.ToString()] = value;
         }
 
+        public void InvalidateSceneObjects()
+        {
+            _scriptObjectCache.Clear();
+            Handles.Clear();
+        }
+
         public void ValidateSourceSyntax()
         {
             var validator = new Script(CoreModules.Preset_SoftSandbox);
