@@ -239,6 +239,9 @@ namespace SleddersLuaRuntime.Core
         {
             if (!Manifest.HasPermission(permission))
                 throw new ScriptRuntimeException($"Mod '{Manifest.Id}' does not have permission '{permission}'. Add it to manifest.lua permissions.");
+
+            if (string.Equals(permission, "dev", StringComparison.OrdinalIgnoreCase) && !_host.Config.EnableDevApi)
+                throw new ScriptRuntimeException("sledders.dev is disabled by the runtime owner. Set EnableDevApi to true in UserData/SleddersLua/config.json to enable developer reflection.");
         }
 
         public DynValue RequireModule(ScriptExecutionContext context, CallbackArguments args)
