@@ -49,7 +49,7 @@ Keep common operations on the object a Lua author already has. Prefer Sledders c
 
 Use `sledders.dev` to investigate a system, then add a normal binding only after its behavior has been tested in game. Do not publish API entries that only work in theory or routinely return `nil` on the current game build.
 
-Stable bindings should prefer deterministic entry points from the current Sledders assembly, resolved through `SleddersBindingResolver`. Broad object/type discovery belongs to compatibility fallback or `sledders.dev`, not the primary stable path. The current local-sled path is `Controller.Instance.SnowmobileController`; the current local-player path starts at `NetClient.Instance.LocalPlayer`.
+Stable bindings should prefer deterministic entry points from the current Sledders assembly, resolved through `SleddersBindingResolver`. Broad object/type discovery belongs to compatibility fallback or `sledders.dev`, not the primary stable path. The current local-sled path is `Controller.Instance.SnowmobileController`. The physical local rider comes from `SnowmobileController.controllerBase.character` (`PlayerManager`). `NetClient.Instance.LocalPlayer` is network identity/profile data and must not be used as the rider transform.
 
 ## Versioned releases
 
