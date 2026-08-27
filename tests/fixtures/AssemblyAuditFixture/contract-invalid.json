@@ -1,0 +1,9 @@
+{
+  "types": [
+    {
+      "name": "AssemblyAuditFixture.CurrentGameType",
+      "fields": ["memberThatDoesNotExist"],
+      "methods": []
+    }
+  ]
+}
