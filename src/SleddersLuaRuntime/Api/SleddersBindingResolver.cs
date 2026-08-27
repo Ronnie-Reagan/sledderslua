@@ -42,6 +42,7 @@ namespace SleddersLuaRuntime.Api
         private static FieldInfo? _inputState;
         private static FieldInfo? _throttleState;
 
+        private static readonly List<string> MissingExactBindings = new List<string>();
         private static bool _initialized;
         private static bool _reportedControllerFallback;
 
@@ -280,6 +281,28 @@ namespace SleddersLuaRuntime.Api
             _inputState = _snowmobileType?.GetField("GJKCDNOBELI", InstanceFlags);
             _throttleState = _inputState?.FieldType.GetField("AINANLMJJDH", InstanceFlags);
 
+            MissingExactBindings.Clear();
+            TrackBinding(_controllerGetInstance, "Controller.get_Instance");
+            TrackBinding(_controllerGetSnowmobile, "Controller.get_SnowmobileController");
+            TrackBinding(_netClientGetInstance, "NetClient.get_Instance");
+            TrackBinding(_netClientGetLocalPlayer, "NetClient.get_LocalPlayer");
+            TrackBinding(_getFuel, "SnowmobileController.get_Fuel");
+            TrackBinding(_getFuelCapacity, "SnowmobileController.get_FuelCapacity");
+            TrackBinding(_setFuel, "SnowmobileController.SetFuel(float)");
+            TrackBinding(_addFuel, "SnowmobileController.AddFuel(float)");
+            TrackBinding(_getRpm, "SnowmobileController.get_Rpm");
+            TrackBinding(_setEngineOnOff, "SnowmobileController.SetEngineOnOff(bool)");
+            TrackBinding(_getVehicle, "SnowmobileController.get_Vehicle");
+            TrackBinding(_controllerBase, "SnowmobileController.controllerBase");
+            TrackBinding(_mainBody, "SnowmobileControllerBase.mainBody");
+            TrackBinding(_respawnable, "SnowmobileControllerBase.respawnable");
+            TrackBinding(_headLightController, "SnowmobileControllerBase.headLightController");
+            TrackBinding(_character, "SnowmobileControllerBase.character");
+            TrackBinding(_headlightState, "SnowmobileController.isHeadlightOn");
+            TrackBinding(_engineState, "SnowmobileController.isEngineOn");
+            TrackBinding(_inputState, "SnowmobileController.GJKCDNOBELI");
+            TrackBinding(_throttleState, "GDDIGGEKEPD.AINANLMJJDH");
+
             _initialized = true;
 
             RuntimeLog.Info(
@@ -289,6 +312,15 @@ namespace SleddersLuaRuntime.Api
                 ", Player=" + BindingState(_controllerBase, _character) +
                 ", SledCore=" + BindingState(_getFuel, _getFuelCapacity, _setFuel, _addFuel, _getRpm, _setEngineOnOff, _getVehicle, _controllerBase, _mainBody) +
                 ", Throttle=" + BindingState(_inputState, _throttleState));
+
+            if (MissingExactBindings.Count > 0)
+                RuntimeLog.Warn("Exact binding gaps: " + string.Join(", ", MissingExactBindings));
+        }
+
+        private static void TrackBinding(MemberInfo? member, string label)
+        {
+            if (member == null)
+                MissingExactBindings.Add(label);
         }
 
         private static MethodInfo? FindMethod(Type? type, string name, BindingFlags flags, Type[] parameters)
