@@ -21,6 +21,10 @@ For callback fault isolation, temporarily add error("smoke test") inside onDraw(
 
 For syntax-error hot reload, introduce a Lua syntax error and save. The last working script should stay loaded. Fix the syntax and save again.
 
+For runtime-error hot reload, add a valid top-level statement that throws during script execution, such as `error("reload preparation smoke test")`, and save. The last working script must remain active. Remove the error and save again; the replacement should then load normally.
+
+At startup on the current Sledders build, confirm the binding log reports exact `Controller` and `NetClient` types. If the runtime reports that exact local-sled binding is unavailable, treat the compatibility fallback as a release warning and investigate before tagging.
+
 ## Developer reflection smoke test
 
 Copy the whole DevSmokeTest folder into Sledders/LuaMods/DevSmokeTest. It has an explicit dev permission in manifest.lua.
