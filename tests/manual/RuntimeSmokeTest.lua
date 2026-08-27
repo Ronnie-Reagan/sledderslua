@@ -47,7 +47,7 @@ local function runSafeApiSweep()
             and type(sledders.time.getFixedDelta()) == "number"
             and type(sledders.time.getDeltaMs()) == "number"
             and type(sledders.time.getFixedDeltaMs()) == "number"
-            and type(sledders.time.getFPS()) == "number"
+            and type(sledders.time.getFps()) == "number"
             and type(sledders.time.getUptime()) == "number"
     end)
 
@@ -108,7 +108,7 @@ local function runSafeApiSweep()
             and type(s.getForwardSpeed()) == "number"
             and type(s.getSpeed()) == "number"
             and type(s.getMass()) == "number"
-            and type(s.getRPM()) == "number"
+            and type(s.getRpm()) == "number"
             and type(s.getThrottle()) == "number"
     end)
 
@@ -228,7 +228,7 @@ sledders.input.onPressed("ctrl+shift+1", function()
     print("Local velocity: " .. tostring(s.getVel()))
     print("World velocity: " .. tostring(s.getWorldVel()))
     print("Fuel: " .. tostring(s.getFuel()) .. " / " .. tostring(s.getFuelCapacity()))
-    print("RPM: " .. tostring(s.getRPM()))
+    print("RPM: " .. tostring(s.getRpm()))
     print("Headlights: " .. tostring(s.getHeadlights()))
 end)
 
