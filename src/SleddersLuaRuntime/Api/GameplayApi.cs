@@ -27,11 +27,6 @@ namespace SleddersLuaRuntime.Api
             {
                 object? playerObject = SleddersGameBindings.FindPlayerObject();
                 object? value = playerObject == null ? null : SleddersGameBindings.GetPosition(playerObject);
-                if (value == null)
-                {
-                    object? sled = SleddersGameBindings.FindLocalSled();
-                    value = sled == null ? null : SleddersGameBindings.GetPosition(sled);
-                }
                 return ValueConverter.ToDynValue(mod, value);
             });
             player.Set("getPos", getPosition);
@@ -40,11 +35,6 @@ namespace SleddersLuaRuntime.Api
             {
                 object? playerObject = SleddersGameBindings.FindPlayerObject();
                 object? value = playerObject == null ? null : SleddersGameBindings.GetRotation(playerObject);
-                if (value == null)
-                {
-                    object? sled = SleddersGameBindings.FindLocalSled();
-                    value = sled == null ? null : SleddersGameBindings.GetRotation(sled);
-                }
                 return ValueConverter.ToDynValue(mod, value);
             });
             player.Set("getRot", getRotation);
