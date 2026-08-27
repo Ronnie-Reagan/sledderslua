@@ -17,13 +17,10 @@ namespace SleddersLuaRuntime.Api
         private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
         private static Type? _controllerType;
-        private static Type? _netClientType;
         private static Type? _snowmobileType;
 
         private static MethodInfo? _controllerGetInstance;
         private static MethodInfo? _controllerGetSnowmobile;
-        private static MethodInfo? _netClientGetInstance;
-        private static MethodInfo? _netClientGetLocalPlayer;
 
         private static MethodInfo? _getFuel;
         private static MethodInfo? _getFuelCapacity;
@@ -91,14 +88,6 @@ namespace SleddersLuaRuntime.Api
             }
 
             return null;
-        }
-
-        public static object? FindLocalNetworkPlayer()
-        {
-            EnsureInitialized();
-
-            object? netClient = InvokeStatic(_netClientGetInstance);
-            return netClient == null ? null : InvokeInstance(_netClientGetLocalPlayer, netClient);
         }
 
         public static bool TryGetFuelNormalized(object sled, out double value)
@@ -254,14 +243,10 @@ namespace SleddersLuaRuntime.Api
         private static void ResolveTypes()
         {
             _controllerType = ReflectionBridge.FindTypeExact("Controller");
-            _netClientType = ReflectionBridge.FindTypeExact("NetClient");
             _snowmobileType = ReflectionBridge.FindTypeExact("SnowmobileController");
 
             _controllerGetInstance = FindMethod(_controllerType, "get_Instance", StaticFlags, Type.EmptyTypes);
             _controllerGetSnowmobile = FindMethod(_controllerType, "get_SnowmobileController", InstanceFlags, Type.EmptyTypes);
-            _netClientGetInstance = FindMethod(_netClientType, "get_Instance", StaticFlags, Type.EmptyTypes);
-            _netClientGetLocalPlayer = FindMethod(_netClientType, "get_LocalPlayer", InstanceFlags, Type.EmptyTypes);
-
             _getFuel = FindMethod(_snowmobileType, "get_Fuel", InstanceFlags, Type.EmptyTypes);
             _getFuelCapacity = FindMethod(_snowmobileType, "get_FuelCapacity", InstanceFlags, Type.EmptyTypes);
             _setFuel = FindMethod(_snowmobileType, "SetFuel", InstanceFlags, new[] { typeof(float) });
@@ -285,8 +270,6 @@ namespace SleddersLuaRuntime.Api
             MissingExactBindings.Clear();
             TrackBinding(_controllerGetInstance, "Controller.get_Instance");
             TrackBinding(_controllerGetSnowmobile, "Controller.get_SnowmobileController");
-            TrackBinding(_netClientGetInstance, "NetClient.get_Instance");
-            TrackBinding(_netClientGetLocalPlayer, "NetClient.get_LocalPlayer");
             TrackBinding(_getFuel, "SnowmobileController.get_Fuel");
             TrackBinding(_getFuelCapacity, "SnowmobileController.get_FuelCapacity");
             TrackBinding(_setFuel, "SnowmobileController.SetFuel(float)");
@@ -309,7 +292,6 @@ namespace SleddersLuaRuntime.Api
             RuntimeLog.Info(
                 "Sledders bindings: " +
                 "Controller=" + BindingState(_controllerGetInstance, _controllerGetSnowmobile) +
-                ", NetClient=" + BindingState(_netClientGetInstance, _netClientGetLocalPlayer) +
                 ", Player=" + BindingState(_controllerBase, _character) +
                 ", SledCore=" + BindingState(_getFuel, _getFuelCapacity, _setFuel, _addFuel, _getRpm, _setEngineOnOff, _getVehicle, _controllerBase, _mainBody) +
                 ", Throttle=" + BindingState(_inputState, _throttleState));
