@@ -57,6 +57,72 @@ local function runDevSweep()
         return type(dump) == "string" and #dump > 0
     end)
 
+    check("inspect local sled mass sources", function()
+        local objects = sledders.dev.objects("SnowmobileController", 16)
+        if type(objects) ~= "table" then
+            return false, "SnowmobileController discovery failed"
+        end
+
+        local localController = nil
+        for _, object in ipairs(objects) do
+            if object.typeName() == "SnowmobileController" then
+                localController = object
+                break
+            end
+        end
+        if not localController then
+            return false, "no exact SnowmobileController object found"
+        end
+
+        local controllerBase = localController.get("controllerBase")
+        if type(controllerBase) ~= "table" then
+            return false, "controllerBase unavailable"
+        end
+
+        local mainBody = controllerBase.get("mainBody")
+        if type(mainBody) ~= "table" then
+            return false, "mainBody unavailable"
+        end
+
+        local bodyMass = mainBody.get("mass")
+        local vehicle = localController.call("get_Vehicle")
+        if type(vehicle) ~= "table" then
+            return false, "vehicle definition unavailable"
+        end
+
+        local vehicleWeight = vehicle.get("weight")
+        if type(bodyMass) ~= "number" or type(vehicleWeight) ~= "number" then
+            return false, "mass values were not numeric"
+        end
+
+        print(string.format(
+            "[PROBE] mass: mainBody.mass=%.3f kg, vehicle.weight=%.3f kg",
+            bodyMass,
+            vehicleWeight))
+        return true
+    end)
+
+    check("inspect teleport binding shapes", function()
+        local controllerType = sledders.dev.type("Controller")
+        local respawnableType = sledders.dev.type("Respawnable")
+        if type(controllerType) ~= "table" or type(respawnableType) ~= "table" then
+            return false, "Controller or Respawnable type unavailable"
+        end
+
+        local requestMembers = controllerType.members("RequestGamePositionChange", 16)
+        local respawnMembers = respawnableType.members("Respawn", 32)
+        if type(requestMembers) ~= "table" or #requestMembers == 0 then
+            return false, "RequestGamePositionChange not found"
+        end
+        if type(respawnMembers) ~= "table" or #respawnMembers == 0 then
+            return false, "Respawn overloads not found"
+        end
+
+        print("[PROBE] teleport: RequestGamePositionChange members=" .. tostring(#requestMembers)
+            .. ", Respawn members=" .. tostring(#respawnMembers))
+        return true
+    end)
+
     print(string.format("Dev reflection sweep: %d/%d passed", passed, total))
 end
 
