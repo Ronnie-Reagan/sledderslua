@@ -849,6 +849,20 @@ namespace SleddersLuaRuntime.Api
             return false;
         }
 
+        public static bool AddFuel(object sled, double litres)
+        {
+            double? capacity = GetFuelCapacity(sled);
+            if (capacity.HasValue && capacity.Value > 0.0)
+            {
+                double normalizedDelta = litres / capacity.Value;
+                if (SleddersBindingResolver.TryAddFuelNormalized(sled, normalizedDelta))
+                    return true;
+            }
+
+            double? current = GetFuel(sled);
+            return current.HasValue && SetFuel(sled, current.Value + litres);
+        }
+
         private static double? GetNativeFuel(object sled)
         {
             if (SleddersBindingResolver.TryGetFuelNormalized(sled, out double exactFuel))
