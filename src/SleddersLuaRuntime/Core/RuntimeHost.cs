@@ -39,6 +39,7 @@ namespace SleddersLuaRuntime.Core
 
             _config = RuntimeConfig.LoadOrCreate(Path.Combine(_dataRoot, "config.json"));
             ReflectionBridge.Initialize();
+            SleddersBindingResolver.Initialize();
             UnityBridge.Initialize();
 
             RuntimeLog.Info($"Runtime {RuntimeVersion}, API {ApiVersion}");
