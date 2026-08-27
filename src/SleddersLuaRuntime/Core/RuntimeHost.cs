@@ -48,6 +48,7 @@ namespace SleddersLuaRuntime.Core
             RuntimeLog.Info($"Game root: {_gameRoot}");
             RuntimeLog.Info($"Lua mods: {_luaModsRoot}");
             RuntimeLog.Info($"Hot reload: {Config.HotReload} ({Config.ScanIntervalSeconds:0.##}s scan)");
+            RuntimeLog.Info($"Developer reflection API: {(Config.EnableDevApi ? "enabled" : "disabled")}");
 
             _manager = new ScriptManager(this);
             _manager.InitialLoad();
