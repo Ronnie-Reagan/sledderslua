@@ -95,21 +95,30 @@ namespace SleddersLuaRuntime.Api
             if (now < _cachedLocalSledUntil && (_cachedLocalSled == null || IsValidSled(_cachedLocalSled)))
                 return _cachedLocalSled;
 
-            Type? exact = ReflectionBridge.FindTypeExact("SnowmobileController");
-            object? best = FindBestSledOfType(exact);
+            object? best = SleddersBindingResolver.FindLocalSled();
+            if (best != null && !IsValidSled(best))
+                best = null;
 
             if (best == null)
             {
-                Type[] fallbacks = ReflectionBridge.FindTypes("SnowmobileController", 24)
-                    .Where(t => !Contains(t.Name, "Remote") && !Contains(t.Name, "Preview") && !t.IsAbstract)
-                    .OrderByDescending(t => string.Equals(t.Name, "SnowmobileController", StringComparison.OrdinalIgnoreCase))
-                    .ToArray();
+                SleddersBindingResolver.ReportCompatibilityFallbackOnce();
 
-                foreach (Type type in fallbacks)
+                Type? exact = ReflectionBridge.FindTypeExact("SnowmobileController");
+                best = FindBestSledOfType(exact);
+
+                if (best == null)
                 {
-                    best = FindBestSledOfType(type);
-                    if (best != null)
-                        break;
+                    Type[] fallbacks = ReflectionBridge.FindTypes("SnowmobileController", 24)
+                        .Where(t => !Contains(t.Name, "Remote") && !Contains(t.Name, "Preview") && !t.IsAbstract)
+                        .OrderByDescending(t => string.Equals(t.Name, "SnowmobileController", StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+
+                    foreach (Type type in fallbacks)
+                    {
+                        best = FindBestSledOfType(type);
+                        if (best != null)
+                            break;
+                    }
                 }
             }
 
@@ -143,6 +152,10 @@ namespace SleddersLuaRuntime.Api
 
         public static object? FindPlayerObject()
         {
+            object? localPlayer = SleddersBindingResolver.FindLocalPlayer();
+            if (localPlayer != null)
+                return localPlayer;
+
             foreach (string typeName in new[] { "PlayerManager", "PlayerInstancier" })
             {
                 Type? type = ReflectionBridge.FindTypeExact(typeName);
