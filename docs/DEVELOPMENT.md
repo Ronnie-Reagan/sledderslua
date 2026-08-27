@@ -38,7 +38,7 @@ dotnet run --project tools/SleddersAssemblyAudit/SleddersAssemblyAudit.csproj --
   tests/bindings/current.json
 ```
 
-The command reports the assembly SHA-256, module MVID, metadata counts, and every required type/field/method contract check. A missing member or method parameter-count mismatch exits non-zero. This is a compatibility gate, not a substitute for in-game smoke tests: metadata cannot prove runtime object ownership, units, or behavior.
+The command reports the assembly SHA-256, module MVID, metadata counts, and every required type/field/method contract check. The current contract pins important field types plus method parameter and return types, so missing members or signature drift exit non-zero. This is a compatibility gate, not a substitute for in-game smoke tests: metadata cannot prove runtime object ownership, units, or behavior.
 
 
 The release ZIP contains the runtime DLL, MoonSharp, the Lua API reference, examples, and license notices. It does not contain MelonLoader or Sledders files.
