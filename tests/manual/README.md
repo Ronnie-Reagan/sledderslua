@@ -23,7 +23,7 @@ For syntax-error hot reload, introduce a Lua syntax error and save. The last wor
 
 For runtime-error hot reload, add a valid top-level statement that throws during script execution, such as `error("reload preparation smoke test")`, and save. The last working script must remain active. Remove the error and save again; the replacement should then load normally.
 
-At startup on the current Sledders build, confirm the binding log reports exact `Controller` and `NetClient` types. If the runtime reports that exact local-sled binding is unavailable, treat the compatibility fallback as a release warning and investigate before tagging.
+At startup on the current Sledders build, confirm the binding log reports exact `Controller`, `Player`, `SledCore`, and `Throttle` bindings. Treat any exact-binding gap or compatibility fallback warning as a release warning and investigate before tagging.
 
 ## Developer reflection smoke test
 
