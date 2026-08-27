@@ -11,80 +11,104 @@ namespace SleddersLuaRuntime.Api
         public static DynValue Wrap(LuaModInstance mod, object value)
         {
             int handle = mod.Handles.Add(value);
+            string typeName = value.GetType().FullName ?? value.GetType().Name;
             var table = new Table(mod.Script);
             table.Set("__handle", DynValue.NewNumber(handle));
-            table.Set("__type", DynValue.NewString(value.GetType().FullName ?? value.GetType().Name));
+            table.Set("__type", DynValue.NewString(typeName));
 
             table.Set("typeName", DynValue.NewCallback((ctx, args) =>
-                DynValue.NewString(value.GetType().FullName ?? value.GetType().Name)));
+                DynValue.NewString(typeName)));
 
             table.Set("name", DynValue.NewCallback((ctx, args) =>
             {
-                string? name = ReflectionBridge.TryGetObjectName(value);
+                object? target = ResolveObject(mod, handle);
+                if (target == null)
+                    return DynValue.Nil;
+
+                string? name = ReflectionBridge.TryGetObjectName(target);
                 return name == null ? DynValue.Nil : DynValue.NewString(name);
             }));
 
             table.Set("get", DynValue.NewCallback((ctx, args) =>
             {
                 mod.DemandPermission("dev");
+                object target = RequireObject(mod, handle);
                 int offset = MethodOffset(args, table);
                 string member = RequireString(args, offset, "object:get(member)");
-                object? result = ReflectionBridge.GetMember(value, member);
+                object? result = ReflectionBridge.GetMember(target, member);
                 return ValueConverter.ToDynValue(mod, result);
             }));
 
             table.Set("set", DynValue.NewCallback((ctx, args) =>
             {
                 mod.DemandPermission("dev");
+                object target = RequireObject(mod, handle);
                 int offset = MethodOffset(args, table);
                 string member = RequireString(args, offset, "object:set(member, value)");
                 if (args.Count <= offset + 1)
                     throw new ScriptRuntimeException("object:set(member, value) requires a value.");
 
-                var memberType = ResolveMemberType(value, member);
+                Type memberType = ResolveMemberType(target, member);
                 object? converted = ValueConverter.FromDynValue(mod, args[offset + 1], memberType);
-                ReflectionBridge.SetMember(value, member, converted);
+                ReflectionBridge.SetMember(target, member, converted);
                 return DynValue.True;
             }));
 
             table.Set("call", DynValue.NewCallback((ctx, args) =>
             {
                 mod.DemandPermission("dev");
+                object target = RequireObject(mod, handle);
                 int offset = MethodOffset(args, table);
                 string method = RequireString(args, offset, "object:call(method, ...)");
                 var rawArgs = new List<object?>();
                 for (int i = offset + 1; i < args.Count; i++)
                     rawArgs.Add(DynToRaw(mod, args[i]));
-                object? result = ReflectionBridge.Call(value, method, rawArgs);
+                object? result = ReflectionBridge.Call(target, method, rawArgs);
                 return ValueConverter.ToDynValue(mod, result);
             }));
 
             table.Set("members", DynValue.NewCallback((ctx, args) =>
             {
                 mod.DemandPermission("dev");
+                object target = RequireObject(mod, handle);
                 int offset = MethodOffset(args, table);
                 string filter = args.Count > offset && args[offset].Type == DataType.String ? args[offset].String : string.Empty;
-                return ToStringArray(mod.Script, ReflectionBridge.DescribeMembers(value, filter));
+                return ToStringArray(mod.Script, ReflectionBridge.DescribeMembers(target, filter));
             }));
 
             table.Set("components", DynValue.NewCallback((ctx, args) =>
             {
                 mod.DemandPermission("dev");
+                object target = RequireObject(mod, handle);
                 int offset = MethodOffset(args, table);
                 string query = args.Count > offset && args[offset].Type == DataType.String ? args[offset].String : string.Empty;
-                var components = ReflectionBridge.GetComponents(value, query, mod.Host.Config.MaxDiscoveryResults);
+                var components = ReflectionBridge.GetComponents(target, query, mod.Host.Config.MaxDiscoveryResults);
                 return ToObjectArray(mod, components);
             }));
 
             table.Set("dump", DynValue.NewCallback((ctx, args) =>
             {
                 mod.DemandPermission("dev");
+                object target = RequireObject(mod, handle);
                 int offset = MethodOffset(args, table);
                 string filter = args.Count > offset && args[offset].Type == DataType.String ? args[offset].String : string.Empty;
-                return DynValue.NewString(ReflectionBridge.Dump(value, filter));
+                return DynValue.NewString(ReflectionBridge.Dump(target, filter));
             }));
 
             return DynValue.NewTable(table);
+        }
+
+        private static object? ResolveObject(LuaModInstance mod, int handle)
+        {
+            return mod.Handles.Get(handle);
+        }
+
+        private static object RequireObject(LuaModInstance mod, int handle)
+        {
+            object? value = ResolveObject(mod, handle);
+            if (value == null)
+                throw new ScriptRuntimeException("Object handle is no longer valid. The object may have been unloaded with its scene.");
+            return value;
         }
 
         internal static object? DynToRaw(LuaModInstance mod, DynValue value)
