@@ -261,8 +261,9 @@ namespace SleddersLuaRuntime.Api
             table.Set("addFuel", DynValue.NewCallback((ctx, args) =>
             {
                 int offset = MethodOffset(args, table);
-                double? current = SleddersGameBindings.GetFuel(sled);
-                return DynValue.NewBoolean(current.HasValue && SleddersGameBindings.SetFuel(sled, current.Value + RequireNumber(args, offset, "sled.addFuel(litres)")));
+                return DynValue.NewBoolean(SleddersGameBindings.AddFuel(
+                    sled,
+                    RequireNumber(args, offset, "sled.addFuel(litres)")));
             }));
             table.Set("fillFuel", DynValue.NewCallback((ctx, args) =>
             {
