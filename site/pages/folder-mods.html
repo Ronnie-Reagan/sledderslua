@@ -17,4 +17,4 @@
     api = "3.1"
 }</code></pre>
 
-      <p>Normal APIs need no permission list. Add <code>permissions = { "dev" }</code> only for scripts that use the developer reflection API.</p>
+      <p>Normal APIs need no permission list. Scripts using the developer reflection API must declare <code>permissions = { "dev" }</code>, and the runtime owner must separately set <code>EnableDevApi</code> to <code>true</code> in <code>UserData/SleddersLua/config.json</code>. Developer reflection is disabled by default.</p>
