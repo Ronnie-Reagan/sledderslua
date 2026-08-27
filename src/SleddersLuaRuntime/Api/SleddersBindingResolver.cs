@@ -27,6 +27,7 @@ namespace SleddersLuaRuntime.Api
         private static MethodInfo? _getFuel;
         private static MethodInfo? _getFuelCapacity;
         private static MethodInfo? _setFuel;
+        private static MethodInfo? _addFuel;
         private static MethodInfo? _getRpm;
         private static MethodInfo? _setEngineOnOff;
         private static MethodInfo? _getVehicle;
@@ -77,6 +78,11 @@ namespace SleddersLuaRuntime.Api
         public static bool TrySetFuelNormalized(object sled, double value)
         {
             return TryInvokeVoid(_setFuel, sled, Convert.ToSingle(value, CultureInfo.InvariantCulture));
+        }
+
+        public static bool TryAddFuelNormalized(object sled, double amount)
+        {
+            return TryInvokeVoid(_addFuel, sled, Convert.ToSingle(amount, CultureInfo.InvariantCulture));
         }
 
         public static bool TryGetRpm(object sled, out double value)
@@ -223,6 +229,7 @@ namespace SleddersLuaRuntime.Api
             _getFuel = FindMethod(_snowmobileType, "get_Fuel", InstanceFlags, Type.EmptyTypes);
             _getFuelCapacity = FindMethod(_snowmobileType, "get_FuelCapacity", InstanceFlags, Type.EmptyTypes);
             _setFuel = FindMethod(_snowmobileType, "SetFuel", InstanceFlags, new[] { typeof(float) });
+            _addFuel = FindMethod(_snowmobileType, "AddFuel", InstanceFlags, new[] { typeof(float) });
             _getRpm = FindMethod(_snowmobileType, "get_Rpm", InstanceFlags, Type.EmptyTypes);
             _setEngineOnOff = FindMethod(_snowmobileType, "SetEngineOnOff", InstanceFlags, new[] { typeof(bool) });
             _getVehicle = FindMethod(_snowmobileType, "get_Vehicle", InstanceFlags, Type.EmptyTypes);
@@ -244,7 +251,7 @@ namespace SleddersLuaRuntime.Api
                 "Sledders bindings: " +
                 "Controller=" + BindingState(_controllerGetInstance, _controllerGetSnowmobile) +
                 ", NetClient=" + BindingState(_netClientGetInstance, _netClientGetLocalPlayer) +
-                ", SledCore=" + BindingState(_getFuel, _getFuelCapacity, _setFuel, _getRpm, _setEngineOnOff, _getVehicle, _controllerBase, _mainBody) +
+                ", SledCore=" + BindingState(_getFuel, _getFuelCapacity, _setFuel, _addFuel, _getRpm, _setEngineOnOff, _getVehicle, _controllerBase, _mainBody) +
                 ", Throttle=" + BindingState(_inputState, _throttleState));
         }
 
