@@ -36,6 +36,7 @@ namespace SleddersLuaRuntime.Api
         private static FieldInfo? _respawnable;
         private static FieldInfo? _headLightController;
         private static FieldInfo? _headlightState;
+        private static FieldInfo? _engineState;
         private static FieldInfo? _inputState;
         private static FieldInfo? _throttleState;
 
@@ -86,6 +87,17 @@ namespace SleddersLuaRuntime.Api
         public static bool TrySetEngineRunning(object sled, bool running)
         {
             return TryInvokeVoid(_setEngineOnOff, sled, running);
+        }
+
+        public static bool TryGetEngineRunning(object sled, out bool running)
+        {
+            running = false;
+            object? raw = TryGetField(_engineState, sled);
+            if (raw is not bool state)
+                return false;
+
+            running = state;
+            return true;
         }
 
         public static bool TryGetVehicle(object sled, out object? vehicle)
@@ -221,6 +233,7 @@ namespace SleddersLuaRuntime.Api
             _respawnable = controllerBaseType?.GetField("respawnable", InstanceFlags);
             _headLightController = controllerBaseType?.GetField("headLightController", InstanceFlags);
             _headlightState = _snowmobileType?.GetField("isHeadlightOn", InstanceFlags);
+            _engineState = _snowmobileType?.GetField("isEngineOn", InstanceFlags);
 
             _inputState = _snowmobileType?.GetField("GJKCDNOBELI", InstanceFlags);
             _throttleState = _inputState?.FieldType.GetField("AINANLMJJDH", InstanceFlags);
