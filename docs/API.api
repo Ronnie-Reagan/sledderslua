@@ -155,6 +155,7 @@ MOD  sledders.mod
   author : String
 
 DEV  sledders.dev
+  Requires manifest permission "dev" and runtime config EnableDevApi=true.
   type(nameOrQuery) -> Type|nil
   types(query, max?) -> Array<Type>
   objects(query, max?) -> Array<Object>
