@@ -31,6 +31,8 @@ Copy the whole DevSmokeTest folder into Sledders/LuaMods/DevSmokeTest. It has an
 
 Set `EnableDevApi` to `true` in `UserData/SleddersLua/config.json` and restart Sledders before running this test. The runtime defaults developer reflection off; both this owner-side setting and the mod's `"dev"` manifest permission are required.
 
-Press Ctrl+Shift+9 in a loaded level. The test is read-only: it resolves UnityEngine.Time, reads static metadata, discovers camera-related types/objects, and reads camera member information through the reflection proxy. It should report a passing summary without mutating game state.
+Press Ctrl+Shift+9 in a loaded level. The test is read-only: it resolves UnityEngine.Time, reads static metadata, discovers camera-related types/objects, reads camera member information, compares the live local sled's `mainBody.mass` with `VehicleScriptableObject.weight`, and inventories the native teleport entry points. It should report a passing summary without mutating game state.
+
+Record the two `[PROBE]` lines when validating a release candidate. The mass probe is evidence for deciding whether API `getMass/setMass` should mean the live main Rigidbody mass or the vehicle-definition weight; do not change that semantic from metadata alone.
 
 Use the MelonLoader log when reporting a failed binding. Include the current Sledders build and runtime commit/tag.
