@@ -20,6 +20,7 @@ namespace SleddersLuaRuntime.Core
         private double _nextSledProbeSeconds;
         private object? _lastSled;
         private bool _sledProbeInitialized;
+        private int _sceneGeneration;
 
         public string GameRoot => _gameRoot;
         public string LuaModsRoot => _luaModsRoot;
@@ -27,6 +28,7 @@ namespace SleddersLuaRuntime.Core
         public RuntimeConfig Config => _config ?? throw new InvalidOperationException("Runtime not initialized.");
         public ScriptManager Manager => _manager ?? throw new InvalidOperationException("Runtime not initialized.");
         public double UptimeSeconds => _runtimeClock.Elapsed.TotalSeconds;
+        public int SceneGeneration => _sceneGeneration;
 
         public void Initialize()
         {
@@ -84,7 +86,9 @@ namespace SleddersLuaRuntime.Core
 
         public void SceneInitialized(int buildIndex, string sceneName)
         {
+            _sceneGeneration++;
             SleddersGameBindings.InvalidateCache();
+            _manager?.InvalidateSceneObjects();
             _sledProbeInitialized = false;
             _lastSled = null;
             _nextSledProbeSeconds = 0.0;
@@ -93,7 +97,9 @@ namespace SleddersLuaRuntime.Core
 
         public void SceneUnloaded(int buildIndex, string sceneName)
         {
+            _sceneGeneration++;
             SleddersGameBindings.InvalidateCache();
+            _manager?.InvalidateSceneObjects();
             _manager?.Dispatch("scene_unloaded", buildIndex, sceneName);
         }
 
