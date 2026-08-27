@@ -29,6 +29,8 @@ At startup on the current Sledders build, confirm the binding log reports exact 
 
 Copy the whole DevSmokeTest folder into Sledders/LuaMods/DevSmokeTest. It has an explicit dev permission in manifest.lua.
 
+Set `EnableDevApi` to `true` in `UserData/SleddersLua/config.json` and restart Sledders before running this test. The runtime defaults developer reflection off; both this owner-side setting and the mod's `"dev"` manifest permission are required.
+
 Press Ctrl+Shift+9 in a loaded level. The test is read-only: it resolves UnityEngine.Time, reads static metadata, discovers camera-related types/objects, and reads camera member information through the reflection proxy. It should report a passing summary without mutating game state.
 
 Use the MelonLoader log when reporting a failed binding. Include the current Sledders build and runtime commit/tag.
