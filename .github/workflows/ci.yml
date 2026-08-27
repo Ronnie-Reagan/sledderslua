@@ -37,6 +37,9 @@ jobs:
         shell: pwsh
         run: ./scripts/build.ps1
 
+      - name: Build assembly audit tool
+        run: dotnet build tools/SleddersAssemblyAudit/SleddersAssemblyAudit.csproj --configuration Release --nologo
+
       - name: Check Lua syntax
         run: dotnet run --project tools/LuaSyntaxCheck/LuaSyntaxCheck.csproj --configuration Release -- examples tests/manual
 
