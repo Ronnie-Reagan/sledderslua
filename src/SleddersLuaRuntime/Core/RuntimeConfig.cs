@@ -10,6 +10,7 @@ namespace SleddersLuaRuntime.Core
         public double ScanIntervalSeconds { get; set; } = 0.75;
         public int MaxDiscoveryResults { get; set; } = 64;
         public bool LogScriptStackTraces { get; set; } = true;
+        public bool EnableDevApi { get; set; } = false;
 
         public static RuntimeConfig LoadOrCreate(string path)
         {
@@ -44,7 +45,8 @@ namespace SleddersLuaRuntime.Core
                 { "HotReload", HotReload },
                 { "ScanIntervalSeconds", ScanIntervalSeconds },
                 { "MaxDiscoveryResults", MaxDiscoveryResults },
-                { "LogScriptStackTraces", LogScriptStackTraces }
+                { "LogScriptStackTraces", LogScriptStackTraces },
+                { "EnableDevApi", EnableDevApi }
             };
         }
 
@@ -56,6 +58,7 @@ namespace SleddersLuaRuntime.Core
             if (values.TryGetValue("ScanIntervalSeconds", out value)) config.ScanIntervalSeconds = Convert.ToDouble(value);
             if (values.TryGetValue("MaxDiscoveryResults", out value)) config.MaxDiscoveryResults = Convert.ToInt32(value);
             if (values.TryGetValue("LogScriptStackTraces", out value)) config.LogScriptStackTraces = Convert.ToBoolean(value);
+            if (values.TryGetValue("EnableDevApi", out value)) config.EnableDevApi = Convert.ToBoolean(value);
 
             config.ScanIntervalSeconds = Math.Max(0.1, config.ScanIntervalSeconds);
             config.MaxDiscoveryResults = Compat.Clamp(config.MaxDiscoveryResults, 1, 1024);
