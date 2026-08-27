@@ -129,11 +129,13 @@ namespace SleddersLuaRuntime.Api
             table.Set("getFixedDelta", DynValue.NewCallback((ctx, args) => DynValue.NewNumber(UnityBridge.FixedDeltaTime)));
             table.Set("getDeltaMs", DynValue.NewCallback((ctx, args) => DynValue.NewNumber(UnityBridge.DeltaTime * 1000.0)));
             table.Set("getFixedDeltaMs", DynValue.NewCallback((ctx, args) => DynValue.NewNumber(UnityBridge.FixedDeltaTime * 1000.0)));
-            table.Set("getFPS", DynValue.NewCallback((ctx, args) =>
+            DynValue getFps = DynValue.NewCallback((ctx, args) =>
             {
                 double dt = UnityBridge.DeltaTime;
                 return dt > 0.0000001 ? DynValue.NewNumber(1.0 / dt) : DynValue.Nil;
-            }));
+            });
+            table.Set("getFps", getFps);
+            table.Set("getFPS", getFps);
             table.Set("getUptime", DynValue.NewCallback((ctx, args) => DynValue.NewNumber(mod.Host.UptimeSeconds)));
             return table;
         }
