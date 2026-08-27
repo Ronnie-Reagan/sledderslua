@@ -28,44 +28,6 @@
       "fieldTypes": {}
     },
     {
-      "name": "NetClient",
-      "fields": [],
-      "methods": [
-        {
-          "name": "get_Instance",
-          "parameterCount": 0,
-          "returnType": "NetClient",
-          "parameterTypes": []
-        },
-        {
-          "name": "get_LocalPlayer",
-          "parameterCount": 0,
-          "returnType": "EDJENIBOCOP",
-          "parameterTypes": []
-        },
-        {
-          "name": "get_LocalClientId",
-          "parameterCount": 0,
-          "parameterTypes": []
-        },
-        {
-          "name": "GetAllPlayersIncludingLocalPlayer",
-          "parameterCount": 0,
-          "returnType": "EDJENIBOCOP[]",
-          "parameterTypes": []
-        },
-        {
-          "name": "GetPlayer",
-          "parameterCount": 1,
-          "returnType": "EDJENIBOCOP",
-          "parameterTypes": [
-            "System.UInt64"
-          ]
-        }
-      ],
-      "fieldTypes": {}
-    },
-    {
       "name": "SnowmobileController",
       "fields": [
         "controllerBase",
