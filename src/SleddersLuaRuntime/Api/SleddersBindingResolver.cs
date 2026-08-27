@@ -36,6 +36,7 @@ namespace SleddersLuaRuntime.Api
         private static FieldInfo? _mainBody;
         private static FieldInfo? _respawnable;
         private static FieldInfo? _headLightController;
+        private static FieldInfo? _character;
         private static FieldInfo? _headlightState;
         private static FieldInfo? _engineState;
         private static FieldInfo? _inputState;
@@ -58,6 +59,21 @@ namespace SleddersLuaRuntime.Api
         }
 
         public static object? FindLocalPlayer()
+        {
+            EnsureInitialized();
+
+            object? sled = FindLocalSled();
+            if (sled != null && TryGetControllerBase(sled, out object? controllerBase) && controllerBase != null)
+            {
+                object? character = TryGetField(_character, controllerBase);
+                if (character != null)
+                    return character;
+            }
+
+            return null;
+        }
+
+        public static object? FindLocalNetworkPlayer()
         {
             EnsureInitialized();
 
@@ -239,6 +255,7 @@ namespace SleddersLuaRuntime.Api
             _mainBody = controllerBaseType?.GetField("mainBody", InstanceFlags);
             _respawnable = controllerBaseType?.GetField("respawnable", InstanceFlags);
             _headLightController = controllerBaseType?.GetField("headLightController", InstanceFlags);
+            _character = controllerBaseType?.GetField("character", InstanceFlags);
             _headlightState = _snowmobileType?.GetField("isHeadlightOn", InstanceFlags);
             _engineState = _snowmobileType?.GetField("isEngineOn", InstanceFlags);
 
@@ -251,6 +268,7 @@ namespace SleddersLuaRuntime.Api
                 "Sledders bindings: " +
                 "Controller=" + BindingState(_controllerGetInstance, _controllerGetSnowmobile) +
                 ", NetClient=" + BindingState(_netClientGetInstance, _netClientGetLocalPlayer) +
+                ", Player=" + BindingState(_controllerBase, _character) +
                 ", SledCore=" + BindingState(_getFuel, _getFuelCapacity, _setFuel, _addFuel, _getRpm, _setEngineOnOff, _getVehicle, _controllerBase, _mainBody) +
                 ", Throttle=" + BindingState(_inputState, _throttleState));
         }
