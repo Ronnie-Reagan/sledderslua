@@ -2,12 +2,34 @@
   "types": [
     {
       "name": "AssemblyAuditFixture.CurrentGameType",
-      "fields": ["character"],
+      "fields": [
+        "character"
+      ],
       "methods": [
-        { "name": "get_Instance", "parameterCount": 0 },
-        { "name": "GetFuel", "parameterCount": 0 },
-        { "name": "SetFuel", "parameterCount": 1 }
-      ]
+        {
+          "name": "get_Instance",
+          "parameterCount": 0,
+          "returnType": "AssemblyAuditFixture.CurrentGameType",
+          "parameterTypes": []
+        },
+        {
+          "name": "GetFuel",
+          "parameterCount": 0,
+          "returnType": "System.Single",
+          "parameterTypes": []
+        },
+        {
+          "name": "SetFuel",
+          "parameterCount": 1,
+          "returnType": "System.Void",
+          "parameterTypes": [
+            "System.Single"
+          ]
+        }
+      ],
+      "fieldTypes": {
+        "character": "System.Object"
+      }
     }
   ]
 }
