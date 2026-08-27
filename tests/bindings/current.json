@@ -6,17 +6,26 @@
       "methods": [
         {
           "name": "get_Instance",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "Controller",
+          "parameterTypes": []
         },
         {
           "name": "get_SnowmobileController",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "SnowmobileController",
+          "parameterTypes": []
         },
         {
           "name": "RequestGamePositionChange",
-          "parameterCount": 1
+          "parameterCount": 1,
+          "returnType": "System.Void",
+          "parameterTypes": [
+            "EGMMAFGCKGA"
+          ]
         }
-      ]
+      ],
+      "fieldTypes": {}
     },
     {
       "name": "NetClient",
@@ -24,25 +33,37 @@
       "methods": [
         {
           "name": "get_Instance",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "NetClient",
+          "parameterTypes": []
         },
         {
           "name": "get_LocalPlayer",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "EDJENIBOCOP",
+          "parameterTypes": []
         },
         {
           "name": "get_LocalClientId",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "parameterTypes": []
         },
         {
           "name": "GetAllPlayersIncludingLocalPlayer",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "EDJENIBOCOP[]",
+          "parameterTypes": []
         },
         {
           "name": "GetPlayer",
-          "parameterCount": 1
+          "parameterCount": 1,
+          "returnType": "EDJENIBOCOP",
+          "parameterTypes": [
+            "System.UInt64"
+          ]
         }
-      ]
+      ],
+      "fieldTypes": {}
     },
     {
       "name": "SnowmobileController",
@@ -55,45 +76,77 @@
       "methods": [
         {
           "name": "get_Fuel",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "System.Single",
+          "parameterTypes": []
         },
         {
           "name": "get_FuelCapacity",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "System.Single",
+          "parameterTypes": []
         },
         {
           "name": "SetFuel",
-          "parameterCount": 1
+          "parameterCount": 1,
+          "returnType": "System.Void",
+          "parameterTypes": [
+            "System.Single"
+          ]
         },
         {
           "name": "AddFuel",
-          "parameterCount": 1
+          "parameterCount": 1,
+          "returnType": "System.Void",
+          "parameterTypes": [
+            "System.Single"
+          ]
         },
         {
           "name": "get_Rpm",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "System.Single",
+          "parameterTypes": []
         },
         {
           "name": "get_RpmForSpeedoMeter",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "System.Single",
+          "parameterTypes": []
         },
         {
           "name": "get_SnowmobileVelocity",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "UnityEngine.Vector3",
+          "parameterTypes": []
         },
         {
           "name": "get_SnowmobileSpeedForSpeedoMeter",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "System.Single",
+          "parameterTypes": []
         },
         {
           "name": "SetEngineOnOff",
-          "parameterCount": 1
+          "parameterCount": 1,
+          "returnType": "System.Void",
+          "parameterTypes": [
+            "System.Boolean"
+          ]
         },
         {
           "name": "get_Vehicle",
-          "parameterCount": 0
+          "parameterCount": 0,
+          "returnType": "VehicleScriptableObject",
+          "parameterTypes": []
         }
-      ]
+      ],
+      "fieldTypes": {
+        "controllerBase": "SnowmobileControllerBase",
+        "isEngineOn": "System.Boolean",
+        "isHeadlightOn": "System.Boolean",
+        "GJKCDNOBELI": "GDDIGGEKEPD"
+      }
     },
     {
       "name": "SnowmobileControllerBase",
@@ -104,7 +157,14 @@
         "MONBCLKFJPG",
         "character"
       ],
-      "methods": []
+      "methods": [],
+      "fieldTypes": {
+        "mainBody": "UnityEngine.Rigidbody",
+        "respawnable": "Respawnable",
+        "headLightController": "HeadLight",
+        "MONBCLKFJPG": "SnowmobileStructure",
+        "character": "PlayerManager"
+      }
     },
     {
       "name": "VehicleScriptableObject",
@@ -116,7 +176,15 @@
         "fuelCapacity",
         "fuelConsumption"
       ],
-      "methods": []
+      "methods": [],
+      "fieldTypes": {
+        "displayName": "System.String",
+        "weight": "System.Single",
+        "horsePower": "System.Single",
+        "maxRpm": "System.Single",
+        "fuelCapacity": "System.Single",
+        "fuelConsumption": "System.Single"
+      }
     },
     {
       "name": "Respawnable",
@@ -124,15 +192,31 @@
       "methods": [
         {
           "name": "Respawn",
-          "parameterCount": 2
+          "parameterCount": 2,
+          "returnType": "System.Void",
+          "parameterTypes": [
+            "UnityEngine.Pose&",
+            "System.Boolean"
+          ]
         },
         {
           "name": "Respawn",
-          "parameterCount": 3
+          "parameterCount": 3,
+          "returnType": "System.Void",
+          "parameterTypes": [
+            "UnityEngine.Vector3",
+            "UnityEngine.Quaternion",
+            "System.Boolean"
+          ]
         },
         {
           "name": "InitialSpawn",
-          "parameterCount": 2
+          "parameterCount": 2,
+          "returnType": "System.Void",
+          "parameterTypes": [
+            "UnityEngine.Vector3",
+            "UnityEngine.Quaternion"
+          ]
         }
       ]
     },
@@ -142,7 +226,11 @@
       "methods": [
         {
           "name": "SetHeadlightEmission",
-          "parameterCount": 1
+          "parameterCount": 1,
+          "returnType": "System.Void",
+          "parameterTypes": [
+            "System.Single"
+          ]
         }
       ]
     },
@@ -151,7 +239,10 @@
       "fields": [
         "driverTransform"
       ],
-      "methods": []
+      "methods": [],
+      "fieldTypes": {
+        "driverTransform": "UnityEngine.Transform"
+      }
     }
   ]
 }
