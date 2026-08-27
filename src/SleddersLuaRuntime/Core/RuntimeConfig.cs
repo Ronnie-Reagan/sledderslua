@@ -24,7 +24,13 @@ namespace SleddersLuaRuntime.Core
                 {
                     var loaded = SimpleJson.Deserialize(File.ReadAllText(path)) as Dictionary<string, object>;
                     if (loaded != null)
-                        return FromDictionary(loaded);
+                    {
+                        RuntimeConfig config = FromDictionary(loaded);
+                        // Rewrite normalized configuration so new settings are visible
+                        // after an upgrade and clamped values are persisted.
+                        File.WriteAllText(path, SimpleJson.Serialize(config.ToDictionary(), true));
+                        return config;
+                    }
                 }
 
                 var config = new RuntimeConfig();
