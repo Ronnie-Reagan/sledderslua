@@ -10,7 +10,10 @@
       <p>A single-file mod must end in <code>.lua</code> and sit directly in <code>LuaMods</code>. A folder mod must contain <code>main.lua</code>.</p>
 
       <h2>I saved broken Lua</h2>
-      <p>A syntax error during hot reload leaves the last working copy running. Fix the file and save it again.</p>
+      <p>A syntax error or top-level runtime error during hot reload leaves the last working copy running. Fix the file and save it again.</p>
+
+      <h2>sledders.dev says it is disabled</h2>
+      <p>Developer reflection is disabled by default. The mod must declare <code>permissions = { "dev" }</code> and the runtime owner must set <code>EnableDevApi</code> to <code>true</code> in <code>UserData/SleddersLua/config.json</code>, then restart Sledders.</p>
 
       <h2>A callback stopped running</h2>
       <p>Check the MelonLoader console. A callback that throws an error is suspended until the script reloads.</p>
