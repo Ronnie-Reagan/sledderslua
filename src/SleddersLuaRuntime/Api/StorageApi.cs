@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using MoonSharp.Interpreter;
 using SleddersLuaRuntime.Core;
@@ -14,8 +15,9 @@ namespace SleddersLuaRuntime.Api
         private readonly string _backupPath;
         private readonly Script _script;
         private readonly Dictionary<string, object?> _values = new Dictionary<string, object?>(StringComparer.Ordinal);
+        private readonly Stopwatch _clock = Stopwatch.StartNew();
         private bool _dirty;
-        private double _dirtySeconds;
+        private double _dirtySinceSeconds;
 
         public StorageApi(RuntimeHost host, string modId, Script script)
         {
@@ -54,8 +56,8 @@ namespace SleddersLuaRuntime.Api
             if (!_dirty)
                 return;
 
-            _dirtySeconds += Math.Max(0.0, dt);
-            if (_dirtySeconds >= AutoSaveDelaySeconds)
+            // Storage durability must not depend on game time scale or pause state.
+            if (_clock.Elapsed.TotalSeconds - _dirtySinceSeconds >= AutoSaveDelaySeconds)
                 Save();
         }
 
@@ -95,7 +97,7 @@ namespace SleddersLuaRuntime.Api
                 }
 
                 _dirty = false;
-                _dirtySeconds = 0.0;
+                _dirtySinceSeconds = 0.0;
             }
             finally
             {
@@ -110,7 +112,7 @@ namespace SleddersLuaRuntime.Api
         private void MarkDirty()
         {
             if (!_dirty)
-                _dirtySeconds = 0.0;
+                _dirtySinceSeconds = _clock.Elapsed.TotalSeconds;
             _dirty = true;
         }
 
