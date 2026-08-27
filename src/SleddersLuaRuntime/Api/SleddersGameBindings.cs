@@ -99,7 +99,7 @@ namespace SleddersLuaRuntime.Api
             if (best != null && !IsValidSled(best))
                 best = null;
 
-            if (best == null)
+            if (best == null && !SleddersBindingResolver.HasExactLocalSledBinding)
             {
                 SleddersBindingResolver.ReportCompatibilityFallbackOnce();
 
@@ -153,7 +153,7 @@ namespace SleddersLuaRuntime.Api
         public static object? FindPlayerObject()
         {
             object? localPlayer = SleddersBindingResolver.FindLocalPlayer();
-            if (localPlayer != null)
+            if (localPlayer != null || SleddersBindingResolver.HasExactLocalPlayerBinding)
                 return localPlayer;
 
             foreach (string typeName in new[] { "PlayerManager", "PlayerInstancier" })
