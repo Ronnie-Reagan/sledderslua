@@ -28,6 +28,19 @@ pwsh ./scripts/install-dev.ps1 -GameDir "C:\Path\To\Sledders"
 pwsh ./scripts/package.ps1
 ```
 
+## Audit a Sledders update
+
+The repository does not store Sledders assemblies. To verify a locally owned/current `Assembly-CSharp.dll` against the binding contract:
+
+```powershell
+dotnet run --project tools/SleddersAssemblyAudit/SleddersAssemblyAudit.csproj -- `
+  "C:\Path\To\Sledders_Data\Managed\Assembly-CSharp.dll" `
+  tests/bindings/current.json
+```
+
+The command reports the assembly SHA-256, module MVID, metadata counts, and every required type/field/method contract check. A missing member or method parameter-count mismatch exits non-zero. This is a compatibility gate, not a substitute for in-game smoke tests: metadata cannot prove runtime object ownership, units, or behavior.
+
+
 The release ZIP contains the runtime DLL, MoonSharp, the Lua API reference, examples, and license notices. It does not contain MelonLoader or Sledders files.
 
 ## API changes
