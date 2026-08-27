@@ -1,0 +1,13 @@
+{
+  "types": [
+    {
+      "name": "AssemblyAuditFixture.CurrentGameType",
+      "fields": ["character"],
+      "methods": [
+        { "name": "get_Instance", "parameterCount": 0 },
+        { "name": "GetFuel", "parameterCount": 0 },
+        { "name": "SetFuel", "parameterCount": 1 }
+      ]
+    }
+  ]
+}
