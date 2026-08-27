@@ -124,11 +124,12 @@ namespace SleddersLuaRuntime.Core
                 if (_failedSourceFingerprints.TryGetValue(source.Key, out string? failedFingerprint) && failedFingerprint == fingerprint)
                     continue;
 
-                // Keep the current VM alive when an edited file has a syntax error.
+                LuaModInstance candidate;
                 try
                 {
-                    var candidate = new LuaModInstance(_host, source);
+                    candidate = new LuaModInstance(_host, source);
                     candidate.ValidateSourceSyntax();
+                    candidate.PrepareLoad();
                 }
                 catch (Exception ex)
                 {
@@ -137,10 +138,31 @@ namespace SleddersLuaRuntime.Core
                     continue;
                 }
 
+                if (_mods.Values.Any(other =>
+                    !ReferenceEquals(other, existing) &&
+                    string.Equals(other.Manifest.Id, candidate.Manifest.Id, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _failedSourceFingerprints[source.Key] = fingerprint;
+                    RuntimeLog.Error($"Hot reload rejected for '{source.MainPath}': duplicate Lua mod id '{candidate.Manifest.Id}'. The last working copy is still running.");
+                    continue;
+                }
+
                 RuntimeLog.Info($"Hot reloading {existing.Manifest.Name}...");
                 existing.Unload("hot reload");
                 _mods.Remove(source.Key);
-                TryLoad(source, fingerprint);
+
+                try
+                {
+                    candidate.Activate();
+                    _mods[source.Key] = candidate;
+                    _failedSourceFingerprints.Remove(source.Key);
+                    RuntimeLog.Info($"Loaded Lua mod: {candidate.Manifest.Name} {candidate.Manifest.Version} by {candidate.Manifest.Author} [{candidate.Manifest.Id}]");
+                }
+                catch (Exception ex)
+                {
+                    _failedSourceFingerprints[source.Key] = fingerprint;
+                    RuntimeLog.Exception($"Prepared hot reload for '{source.MainPath}' failed during activation", ex);
+                }
             }
         }
 
@@ -172,7 +194,8 @@ namespace SleddersLuaRuntime.Core
                 mod.ValidateSourceSyntax();
                 if (_mods.Values.Any(existing => string.Equals(existing.Manifest.Id, mod.Manifest.Id, StringComparison.OrdinalIgnoreCase)))
                     throw new InvalidOperationException($"Duplicate Lua mod id '{mod.Manifest.Id}'. Mod ids must be unique.");
-                mod.Load();
+                mod.PrepareLoad();
+                mod.Activate();
                 _mods[source.Key] = mod;
                 _failedSourceFingerprints.Remove(source.Key);
                 RuntimeLog.Info($"Loaded Lua mod: {mod.Manifest.Name} {mod.Manifest.Version} by {mod.Manifest.Author} [{mod.Manifest.Id}]");
