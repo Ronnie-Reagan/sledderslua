@@ -150,17 +150,22 @@ internal sealed record TypeSnapshot(
     HashSet<string> Fields,
     Dictionary<string, HashSet<int>> Methods);
 
-internal sealed record Contract(List<TypeContract> Types)
+internal sealed class Contract
 {
-    public List<TypeContract> Types { get; init; } = Types ?? new();
+    public List<TypeContract> Types { get; set; } = new();
 }
 
-internal sealed record TypeContract(string Name, List<string> Fields, List<MethodContract> Methods)
+internal sealed class TypeContract
 {
-    public List<string> Fields { get; init; } = Fields ?? new();
-    public List<MethodContract> Methods { get; init; } = Methods ?? new();
+    public string Name { get; set; } = string.Empty;
+    public List<string> Fields { get; set; } = new();
+    public List<MethodContract> Methods { get; set; } = new();
 }
 
-internal sealed record MethodContract(string Name, int ParameterCount);
+internal sealed class MethodContract
+{
+    public string Name { get; set; } = string.Empty;
+    public int ParameterCount { get; set; }
+}
 
 internal sealed record CheckResult(string Kind, string Member, bool Passed, string? Detail);
