@@ -689,13 +689,16 @@ namespace SleddersLuaRuntime.Api
         {
             bool changed = SleddersBindingResolver.TrySetHeadlightState(sled, enabled);
 
-            foreach (string member in HeadlightBoolMembers)
+            if (!changed)
             {
-                Type? memberType = ResolveMemberType(sled, member);
-                if (memberType == typeof(bool) && ReflectionBridge.TrySetMember(sled, member, enabled))
+                foreach (string member in HeadlightBoolMembers)
                 {
-                    changed = true;
-                    break;
+                    Type? memberType = ResolveMemberType(sled, member);
+                    if (memberType == typeof(bool) && ReflectionBridge.TrySetMember(sled, member, enabled))
+                    {
+                        changed = true;
+                        break;
+                    }
                 }
             }
 
