@@ -108,6 +108,14 @@ namespace SleddersLuaRuntime.Core
 
         public void Load()
         {
+            PrepareLoad();
+            Activate();
+        }
+
+        public void PrepareLoad()
+        {
+            if (_script != null)
+                throw new InvalidOperationException("Lua mod instance has already been prepared.");
             if (!IsApiCompatible(Manifest.Api))
                 throw new InvalidOperationException($"Mod requires API '{Manifest.Api}', runtime provides '{RuntimeHost.ApiVersion}'.");
 
@@ -122,9 +130,17 @@ namespace SleddersLuaRuntime.Core
             _script.DoString(code, codeFriendlyName: _source.MainPath);
 
             SnapshotSourceTimes();
+        }
+
+        public void Activate()
+        {
+            if (_script == null || _storage == null)
+                throw new InvalidOperationException("Lua mod must be prepared before activation.");
+            if (Enabled)
+                return;
+
             Enabled = true;
             _suspendedCallbacks.Clear();
-
             CallCanonical("onLoad", Array.Empty<object?>());
         }
 
