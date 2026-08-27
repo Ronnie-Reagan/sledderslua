@@ -223,7 +223,9 @@ namespace SleddersLuaRuntime.Api
                 return DynValue.NewBoolean(SleddersGameBindings.ReleaseHeadlights(sled, mod.Manifest.Id));
             }));
 
-            table.Set("getRPM", DynValue.NewCallback((ctx, args) => NullableNumber(SleddersGameBindings.GetRpm(sled))));
+            DynValue getRpm = DynValue.NewCallback((ctx, args) => NullableNumber(SleddersGameBindings.GetRpm(sled)));
+            table.Set("getRpm", getRpm);
+            table.Set("getRPM", getRpm);
             table.Set("getThrottle", DynValue.NewCallback((ctx, args) => NullableNumber(SleddersGameBindings.GetThrottle(sled))));
             table.Set("isEngineOn", DynValue.NewCallback((ctx, args) => NullableBool(SleddersGameBindings.IsEngineOn(sled))));
             table.Set("setEngineOn", DynValue.NewCallback((ctx, args) =>
