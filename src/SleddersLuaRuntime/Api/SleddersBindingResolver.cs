@@ -45,6 +45,24 @@ namespace SleddersLuaRuntime.Api
         private static bool _initialized;
         private static bool _reportedControllerFallback;
 
+        public static bool HasExactLocalSledBinding
+        {
+            get
+            {
+                EnsureInitialized();
+                return _controllerGetInstance != null && _controllerGetSnowmobile != null;
+            }
+        }
+
+        public static bool HasExactLocalPlayerBinding
+        {
+            get
+            {
+                EnsureInitialized();
+                return HasExactLocalSledBinding && _controllerBase != null && _character != null;
+            }
+        }
+
         public static void Initialize()
         {
             ResolveTypes();
