@@ -67,6 +67,12 @@ namespace SleddersLuaRuntime.Core
             }
         }
 
+        public void InvalidateSceneObjects()
+        {
+            foreach (LuaModInstance mod in OrderedMods())
+                mod.InvalidateSceneObjects();
+        }
+
         public void Shutdown()
         {
             foreach (LuaModInstance mod in OrderedMods()) mod.Unload("runtime shutdown");
