@@ -212,6 +212,9 @@ namespace SleddersLuaRuntime.Api
 
         public static object? GetVehicleDefinition(object sled)
         {
+            if (SleddersBindingResolver.TryGetVehicle(sled, out object? exactVehicle))
+                return exactVehicle;
+
             if (TryCallAny(sled,
                     new[] { "GetVehicle", "GetVehicleDefinition", "GetVehicleScriptableObject", "KCBOABAJENP" },
                     Array.Empty<object?>(), out object? result) &&
@@ -244,11 +247,16 @@ namespace SleddersLuaRuntime.Api
 
         public static object? GetControllerBase(object sled)
         {
+            if (SleddersBindingResolver.TryGetControllerBase(sled, out object? exact))
+                return exact;
             return TryGetAny(sled, out object? value, "controllerBase", "ControllerBase") ? value : null;
         }
 
         public static object? GetRespawnable(object sled)
         {
+            if (SleddersBindingResolver.TryGetRespawnable(sled, out object? exactRespawnable))
+                return exactRespawnable;
+
             object? controllerBase = GetControllerBase(sled);
             if (controllerBase != null && TryGetAny(controllerBase, out object? respawnable, "respawnable", "Respawnable") && respawnable != null)
                 return respawnable;
@@ -265,7 +273,14 @@ namespace SleddersLuaRuntime.Api
             if (ReferenceEquals(sled, _cachedBodyOwner) && _cachedBody != null)
                 return _cachedBody;
 
-            // Prefer controllerBase.mainBody over guessed child rigidbodies.
+            // Prefer the exact current-build controllerBase.mainBody binding.
+            if (SleddersBindingResolver.TryGetMainBody(sled, out object? exactBody) && exactBody != null)
+            {
+                _cachedBodyOwner = sled;
+                _cachedBody = exactBody;
+                return exactBody;
+            }
+
             object? controllerBase = GetControllerBase(sled);
             if (controllerBase != null && TryGetAny(controllerBase, out object? mainBody, "mainBody", "MainBody") && mainBody != null)
             {
@@ -672,7 +687,7 @@ namespace SleddersLuaRuntime.Api
 
         private static bool ApplyHeadlightState(object sled, bool enabled, bool refreshVisuals)
         {
-            bool changed = false;
+            bool changed = SleddersBindingResolver.TrySetHeadlightState(sled, enabled);
 
             foreach (string member in HeadlightBoolMembers)
             {
@@ -696,10 +711,16 @@ namespace SleddersLuaRuntime.Api
 
             // Forced mode also refreshes the native headlight controller immediately.
             bool visualEnabled = enabled && (IsEngineOn(sled) ?? true);
-            if (TryGetAny(sled, out object? controllerBase, "controllerBase") &&
-                controllerBase != null &&
-                TryGetAny(controllerBase, out object? nativeLights, "headLightController", "headlightController") &&
-                nativeLights != null)
+            object? nativeLights = null;
+            if (!SleddersBindingResolver.TryGetHeadlightController(sled, out nativeLights))
+            {
+                if (TryGetAny(sled, out object? controllerBase, "controllerBase") &&
+                    controllerBase != null &&
+                    TryGetAny(controllerBase, out object? fallbackLights, "headLightController", "headlightController"))
+                    nativeLights = fallbackLights;
+            }
+
+            if (nativeLights != null)
             {
                 if (TryCallAny(nativeLights,
                         new[] { "Refresh", "SetState", "SetEnabled" },
@@ -721,6 +742,9 @@ namespace SleddersLuaRuntime.Api
 
         private static bool? ReadHeadlightStateDirect(object sled)
         {
+            if (SleddersBindingResolver.TryGetHeadlightState(sled, out bool exactState))
+                return exactState;
+
             if (TryGetAny(sled, out object? raw, HeadlightBoolMembers) && raw is bool state)
                 return state;
 
@@ -772,6 +796,9 @@ namespace SleddersLuaRuntime.Api
 
         public static double? GetFuelCapacity(object sled)
         {
+            if (SleddersBindingResolver.TryGetFuelCapacity(sled, out double exactCapacity))
+                return exactCapacity;
+
             if (TryGetAnyOrGetter(sled, out object? value, FuelCapacityMembers))
                 return ToDouble(value);
 
@@ -805,6 +832,9 @@ namespace SleddersLuaRuntime.Api
             if (capacity.HasValue && UsesNormalizedFuel(sled, currentRaw ?? 1.0, capacity.Value))
                 nativeAmount = capacity.Value <= 0.0 ? 0.0 : litres / capacity.Value;
 
+            if (SleddersBindingResolver.TrySetFuelNormalized(sled, nativeAmount))
+                return true;
+
             if (TryCallAny(sled, new[] { "SetFuel" }, new object?[] { nativeAmount }, out _))
                 return true;
 
@@ -821,6 +851,8 @@ namespace SleddersLuaRuntime.Api
 
         private static double? GetNativeFuel(object sled)
         {
+            if (SleddersBindingResolver.TryGetFuelNormalized(sled, out double exactFuel))
+                return exactFuel;
             return TryGetAnyOrGetter(sled, out object? value, FuelMembers) ? ToDouble(value) : null;
         }
 
@@ -838,11 +870,16 @@ namespace SleddersLuaRuntime.Api
 
         public static double? GetRpm(object sled)
         {
+            if (SleddersBindingResolver.TryGetRpm(sled, out double exactRpm))
+                return exactRpm;
             return TryGetAnyOrGetter(sled, out object? value, RpmMembers) ? ToDouble(value) : null;
         }
 
         public static double? GetThrottle(object sled)
         {
+            if (SleddersBindingResolver.TryGetThrottle(sled, out double exactThrottle))
+                return exactThrottle;
+
             if (TryGetAnyOrGetter(sled, out object? value, ThrottleMembers))
                 return ToDouble(value);
 
@@ -856,6 +893,9 @@ namespace SleddersLuaRuntime.Api
 
         public static bool? IsEngineOn(object sled)
         {
+            if (SleddersBindingResolver.TryGetEngineRunning(sled, out bool exactState))
+                return exactState;
+
             if (TryGetAnyOrGetter(sled, out object? value, EngineOnMembers) && value is bool state)
                 return state;
             return null;
@@ -863,7 +903,10 @@ namespace SleddersLuaRuntime.Api
 
         public static bool SetEngineRunning(object sled, bool running)
         {
-            // Use the game setter so its fuel guard and controller state stay in sync.
+            // Use the exact game setter so its fuel guard and controller state stay in sync.
+            if (SleddersBindingResolver.TrySetEngineRunning(sled, running))
+                return true;
+
             if (TryCallAny(sled, new[] { "SetEngineOnOff" }, new object?[] { running }, out _))
                 return true;
 
