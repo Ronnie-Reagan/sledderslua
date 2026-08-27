@@ -128,6 +128,16 @@ namespace SleddersLuaRuntime.Core
                 try
                 {
                     candidate = new LuaModInstance(_host, source);
+
+                    if (_mods.Values.Any(other =>
+                        !ReferenceEquals(other, existing) &&
+                        string.Equals(other.Manifest.Id, candidate.Manifest.Id, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        _failedSourceFingerprints[source.Key] = fingerprint;
+                        RuntimeLog.Error($"Hot reload rejected for '{source.MainPath}': duplicate Lua mod id '{candidate.Manifest.Id}'. The last working copy is still running.");
+                        continue;
+                    }
+
                     candidate.ValidateSourceSyntax();
                     candidate.PrepareLoad();
                 }
@@ -135,15 +145,6 @@ namespace SleddersLuaRuntime.Core
                 {
                     _failedSourceFingerprints[source.Key] = fingerprint;
                     RuntimeLog.Exception($"Hot reload rejected for '{source.MainPath}'. The last working copy is still running", ex);
-                    continue;
-                }
-
-                if (_mods.Values.Any(other =>
-                    !ReferenceEquals(other, existing) &&
-                    string.Equals(other.Manifest.Id, candidate.Manifest.Id, StringComparison.OrdinalIgnoreCase)))
-                {
-                    _failedSourceFingerprints[source.Key] = fingerprint;
-                    RuntimeLog.Error($"Hot reload rejected for '{source.MainPath}': duplicate Lua mod id '{candidate.Manifest.Id}'. The last working copy is still running.");
                     continue;
                 }
 
