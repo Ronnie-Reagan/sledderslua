@@ -40,6 +40,19 @@ jobs:
       - name: Build assembly audit tool
         run: dotnet build tools/SleddersAssemblyAudit/SleddersAssemblyAudit.csproj --configuration Release --nologo
 
+      - name: Test assembly audit tool
+        shell: pwsh
+        run: |
+          dotnet build tests/fixtures/AssemblyAuditFixture/AssemblyAuditFixture.csproj --configuration Release --nologo
+          if ($LASTEXITCODE -ne 0) { throw "Assembly audit fixture build failed." }
+
+          $fixture = "tests/fixtures/AssemblyAuditFixture/bin/Release/net8.0/AssemblyAuditFixture.dll"
+          dotnet run --project tools/SleddersAssemblyAudit/SleddersAssemblyAudit.csproj --configuration Release --no-build -- $fixture tests/fixtures/AssemblyAuditFixture/contract.json
+          if ($LASTEXITCODE -ne 0) { throw "Assembly audit positive contract failed." }
+
+          dotnet run --project tools/SleddersAssemblyAudit/SleddersAssemblyAudit.csproj --configuration Release --no-build -- $fixture tests/fixtures/AssemblyAuditFixture/contract-invalid.json
+          if ($LASTEXITCODE -eq 0) { throw "Assembly audit negative contract unexpectedly passed." }
+
       - name: Check Lua syntax
         run: dotnet run --project tools/LuaSyntaxCheck/LuaSyntaxCheck.csproj --configuration Release -- examples tests/manual
 
