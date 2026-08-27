@@ -9,10 +9,10 @@
     <RootNamespace>SleddersLuaRuntime</RootNamespace>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
-    <Version>0.4.0-dev</Version>
-    <AssemblyVersion>0.4.0.0</AssemblyVersion>
-    <FileVersion>0.4.0.0</FileVersion>
-    <InformationalVersion>0.4.0-dev</InformationalVersion>
+    <Version>0.5.0-dev</Version>
+    <AssemblyVersion>0.5.0.0</AssemblyVersion>
+    <FileVersion>0.5.0.0</FileVersion>
+    <InformationalVersion>0.5.0-dev</InformationalVersion>
     <Product>Sledders Lua Runtime</Product>
     <Authors>Don</Authors>
     <Description>Lua runtime and scripting API for Sledders.</Description>

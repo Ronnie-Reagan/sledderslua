@@ -11,7 +11,7 @@ namespace SleddersLuaRuntime.Core
         public string Name { get; private set; } = string.Empty;
         public string Author { get; private set; } = "Unknown";
         public string Version { get; private set; } = "0.0.0";
-        public string Api { get; private set; } = "3.1";
+        public string Api { get; private set; } = "3.2";
         public HashSet<string> Permissions { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public bool HasPermission(string permission) => Permissions.Contains(permission);

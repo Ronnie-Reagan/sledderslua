@@ -75,7 +75,7 @@ namespace SleddersLuaRuntime.Api
                 double y1 = RequireNumber(args, offset + 1, "screen.line(x1, y1, x2, y2 [, thickness])");
                 double x2 = RequireNumber(args, offset + 2, "screen.line(x1, y1, x2, y2 [, thickness])");
                 double y2 = RequireNumber(args, offset + 3, "screen.line(x1, y1, x2, y2 [, thickness])");
-                double thickness = args.Count > offset + 4 && args[offset + 4].Type == DataType.Number ? args[offset + 4].Number : 1.0;
+                double thickness = args.Count > offset + 4 && !args[offset + 4].IsNil() ? RequireNumber(args, offset + 4, "screen thickness") : 1.0;
                 return DynValue.NewBoolean(DrawLine(mod, x1, y1, x2, y2, thickness));
             }));
 
@@ -85,8 +85,8 @@ namespace SleddersLuaRuntime.Api
                 double x = RequireNumber(args, offset, "screen.circle(x, y, radius [, segments, thickness])");
                 double y = RequireNumber(args, offset + 1, "screen.circle(x, y, radius [, segments, thickness])");
                 double radius = RequireNumber(args, offset + 2, "screen.circle(x, y, radius [, segments, thickness])");
-                int segments = args.Count > offset + 3 && args[offset + 3].Type == DataType.Number ? Math.Max(8, Math.Min(128, (int)args[offset + 3].Number)) : 32;
-                double thickness = args.Count > offset + 4 && args[offset + 4].Type == DataType.Number ? args[offset + 4].Number : 1.0;
+                int segments = args.Count > offset + 3 && !args[offset + 3].IsNil() ? RequireInt(args, offset + 3, "screen.circle segments", 8, 128) : 32;
+                double thickness = args.Count > offset + 4 && !args[offset + 4].IsNil() ? RequireNumber(args, offset + 4, "screen thickness") : 1.0;
                 return DynValue.NewBoolean(DrawCircle(mod, x, y, radius, segments, thickness));
             }));
 
@@ -99,7 +99,7 @@ namespace SleddersLuaRuntime.Api
                 double y2 = RequireNumber(args, offset + 3, "screen.triangle(x1,y1,x2,y2,x3,y3 [, thickness])");
                 double x3 = RequireNumber(args, offset + 4, "screen.triangle(x1,y1,x2,y2,x3,y3 [, thickness])");
                 double y3 = RequireNumber(args, offset + 5, "screen.triangle(x1,y1,x2,y2,x3,y3 [, thickness])");
-                double thickness = args.Count > offset + 6 && args[offset + 6].Type == DataType.Number ? args[offset + 6].Number : 1.0;
+                double thickness = args.Count > offset + 6 && !args[offset + 6].IsNil() ? RequireNumber(args, offset + 6, "screen thickness") : 1.0;
                 bool ok = DrawLine(mod, x1, y1, x2, y2, thickness);
                 ok &= DrawLine(mod, x2, y2, x3, y3, thickness);
                 ok &= DrawLine(mod, x3, y3, x1, y1, thickness);
@@ -111,7 +111,7 @@ namespace SleddersLuaRuntime.Api
                 int offset = MethodOffset(args, table);
                 if (args.Count <= offset || args[offset].Type != DataType.Table)
                     throw new ScriptRuntimeException("screen.poly(points [, thickness]) expects {{x=,y=}, ...}.");
-                double thickness = args.Count > offset + 1 && args[offset + 1].Type == DataType.Number ? args[offset + 1].Number : 1.0;
+                double thickness = args.Count > offset + 1 && !args[offset + 1].IsNil() ? RequireNumber(args, offset + 1, "screen.poly thickness") : 1.0;
                 return DynValue.NewBoolean(DrawPoly(mod, args[offset].Table, thickness));
             }));
 
@@ -122,10 +122,10 @@ namespace SleddersLuaRuntime.Api
                 string text = args[offset].Type == DataType.String ? args[offset].String : args[offset].ToPrintString();
                 double x = RequireNumber(args, offset + 1, "screen.print(text, x, y [, width, height])");
                 double y = RequireNumber(args, offset + 2, "screen.print(text, x, y [, width, height])");
-                double w = args.Count > offset + 3 && args[offset + 3].Type == DataType.Number
-                    ? args[offset + 3].Number
+                double w = args.Count > offset + 3 && !args[offset + 3].IsNil()
+                    ? RequireNumber(args, offset + 3, "screen.print width")
                     : Math.Max(32.0, WindowApi.GetWidth() - x);
-                double h = args.Count > offset + 4 && args[offset + 4].Type == DataType.Number ? args[offset + 4].Number : 28.0;
+                double h = args.Count > offset + 4 && !args[offset + 4].IsNil() ? RequireNumber(args, offset + 4, "screen.print height") : 28.0;
                 return DynValue.NewBoolean(DrawText(mod, text, x, y, w, h));
             }));
 
@@ -248,7 +248,11 @@ namespace SleddersLuaRuntime.Api
                 DynValue x = point.Table.Get("x");
                 DynValue y = point.Table.Get("y");
                 if (x.Type == DataType.Number && y.Type == DataType.Number)
+                {
+                    if (double.IsNaN(x.Number) || double.IsInfinity(x.Number) || double.IsNaN(y.Number) || double.IsInfinity(y.Number))
+                        throw new ScriptRuntimeException("screen.poly point coordinates must be finite numbers.");
                     parsed.Add(System.Tuple.Create(x.Number, y.Number));
+                }
             }
             if (parsed.Count < 2) return false;
             bool ok = true;
@@ -331,7 +335,7 @@ namespace SleddersLuaRuntime.Api
                 r = RequireNumber(args, offset, "screen.setColor(r, g, b [, a])");
                 g = RequireNumber(args, offset + 1, "screen.setColor(r, g, b [, a])");
                 b = RequireNumber(args, offset + 2, "screen.setColor(r, g, b [, a])");
-                a = args.Count > offset + 3 && args[offset + 3].Type == DataType.Number ? args[offset + 3].Number : 1.0;
+                a = args.Count > offset + 3 && !args[offset + 3].IsNil() ? RequireNumber(args, offset + 3, "screen.setColor alpha") : 1.0;
             }
             NormalizeColor(ref r, ref g, ref b, ref a);
         }
@@ -354,13 +358,28 @@ namespace SleddersLuaRuntime.Api
         private static double TableNumber(Table table, string key, double fallback)
         {
             DynValue value = table.Get(key);
-            return value.Type == DataType.Number ? value.Number : fallback;
+            if (value.IsNil()) return fallback;
+            if (value.Type != DataType.Number || double.IsNaN(value.Number) || double.IsInfinity(value.Number))
+                throw new ScriptRuntimeException("screen color component '" + key + "' must be a finite number.");
+            return value.Number;
         }
 
         private static double RequireNumber(CallbackArguments args, int index, string usage)
         {
-            if (args.Count <= index || args[index].Type != DataType.Number) throw new ScriptRuntimeException(usage + " expects numbers.");
-            return args[index].Number;
+            if (args.Count <= index || args[index].Type != DataType.Number)
+                throw new ScriptRuntimeException(usage + " expects numbers.");
+            double value = args[index].Number;
+            if (double.IsNaN(value) || double.IsInfinity(value))
+                throw new ScriptRuntimeException(usage + " expects finite numbers.");
+            return value;
+        }
+
+        private static int RequireInt(CallbackArguments args, int index, string usage, int min, int max)
+        {
+            double raw = RequireNumber(args, index, usage);
+            if (Math.Abs(raw - Math.Round(raw)) > 0.0000001 || raw < min || raw > max)
+                throw new ScriptRuntimeException(usage + $" expects an integer from {min} to {max}.");
+            return (int)raw;
         }
 
         private static int MethodOffset(CallbackArguments args, Table table)

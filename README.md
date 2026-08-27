@@ -1,21 +1,28 @@
 # Sledders Lua
 
-Lua modding for Sledders without compiling a DLL.
+Lua modding framework for **Sledders** without requiring every mod author to compile a DLL.
 
 **Documentation:** https://donreagan.ca/sledderslua/
 
-A Lua mod can be a single `.lua` file. Put it in `Sledders/LuaMods`, start the game, edit the file, save it, and the runtime hot-reloads it.
+The framework is designed around two goals:
+
+- **Very low barrier to entry:** a useful mod can be one `.lua` file copied into `Sledders/LuaMods`.
+- **High capability ceiling:** normal stable APIs cover sled tuning/physics, rider state, native HUD, camera/photo mode, audio, materials/renderers, world/weather/snow/time/fuel, native input, physics queries, scene objects and AssetBundles. Raw developer reflection is the last resort, not the normal way to mod the game.
+
+A script can be edited while the game is running. The runtime hot-reloads changed source while preserving the last working VM when a candidate edit fails.
 
 ## Install the runtime
 
-You need Sledders with MelonLoader 0.7.1 already installed.
+Requirements:
 
-1. Download a versioned release or a nightly build from the Releases page.
-2. Close Sledders.
-3. Extract the release ZIP into the Sledders game folder.
-4. Start Sledders.
+- Sledders
+- MelonLoader 0.7.1
 
-The ZIP installs:
+1. Close Sledders.
+2. Extract a Sledders Lua release into the game directory.
+3. Start Sledders.
+
+A release installs roughly:
 
 ```text
 Sledders/
@@ -29,137 +36,247 @@ Sledders/
     Examples/
 ```
 
-The MelonLoader console should show `Sledders Lua Runtime` during startup.
+The MelonLoader console should report `Sledders Lua Runtime` during startup.
 
-## Install a Lua mod
+## Your first mod
 
-Single-file mod:
-
-```text
-Sledders/LuaMods/MyMod.lua
-```
-
-Folder mod:
+Create:
 
 ```text
-Sledders/LuaMods/MyMod/
-  main.lua
-  manifest.lua
+Sledders/LuaMods/MyFirstMod.lua
 ```
 
-Most scripts can be added, edited, or removed while Sledders is running. The runtime scans `LuaMods` and reloads changed scripts automatically.
-
-## Make your first mod
-
-Start by copying something from `SleddersLua/Examples` into `LuaMods` and changing it.
-
-Good first samples:
-
-- `HeadlightToggle.lua`
-- `ForwardBoost.lua`
-- `Refuel.lua`
-- `SimpleHUD.lua`
-- `TopSpeedTracker.lua`
-
-Lua files are plain text. Notepad works; a code editor such as VS Code or Notepad++ is easier to read.
-
-A normal script gets the player's sled like this:
-
-```lua
-local sled = sledders.player.getSled()
-```
-
-From there, normal sled actions are directly on that object:
-
-```lua
-sled.getSpeed()
-sled.getFuel()
-sled.setHeadlights(true)
-sled.addVel(0, 0, 25)
-```
-
-The compact function list is in [`docs/API.api`](docs/API.api). Runnable code belongs in [`examples/`](examples/).
-
-## The few Lua basics you need first
-
-A variable remembers a value:
-
-```lua
-local boost = 25
-local enabled = true
-local name = "My Mod"
-```
-
-A function is a piece of code you can run:
-
-```lua
-local function sayHello()
-    print("hello")
-end
-```
-
-The runtime calls certain functions for you:
+Paste:
 
 ```lua
 function onLoad()
+    print("My first Sledders Lua mod loaded")
 end
 
-function onTick(dt)
-end
-
-function onDraw()
-end
-
-function onKey(key)
-end
+sledders.input.onPressed("h", function()
+    local sled = sledders.player.getSled()
+    if sled then
+        sled.toggleHeadlights()
+    end
+end)
 ```
 
-You only define the callbacks you need.
+Save the file. With hot reload enabled, you normally do not need to restart Sledders.
 
-`nil` means there is no value. A sled can be `nil` while a level is loading, so scripts commonly check it:
+## Common modding is intentionally simple
+
+Get the local sled:
 
 ```lua
 local sled = sledders.player.getSled()
 if not sled then return end
 ```
 
-Positions and movement use values with `x`, `y`, and `z` components. Common setters also accept three separate numbers.
-
-For sled-local velocity:
-
-```text
-X = right / left
-Y = up / down
-Z = forward / backward
-```
-
-That makes a forward boost simple even when the sled is turned, pitched, or rolled:
+Read normal telemetry:
 
 ```lua
-sled.addVel(0, 0, 25)
+print(sled.getSpeed())
+print(sled.getRpm())
+print(sled.getFuel())
 ```
 
-Functions containing `WorldVel` use fixed map/world axes instead.
+Change normal state:
 
-## Errors
+```lua
+sled.setFuel(20)
+sled.setEngineOn(true)
+sled.setHeadlights(true)
+sled.addVel(0, 0, 10)
+```
 
-If a script has an error, read the MelonLoader console. Errors include the Lua filename and line when available.
+Tune vehicle definition values without raw reflection:
 
-A broken repeating callback such as `onDraw()` is suspended instead of printing the same failure every frame. Fix the file and save it; hot reload gives it another try.
+```lua
+local vehicle = sled.getVehicle()
+vehicle.setHorsepower(180)
+vehicle.setMaxRpm(9000)
+vehicle.setFuelCapacity(50)
+```
 
-If a changed script has a syntax error, the last working copy stays loaded. The runtime retries after the file changes again.
+Physics remains separate from vehicle-definition values:
 
-## Nightly and versioned releases
+```lua
+local body = sled.getBody()
+body.setMass(240)
+body.setAngularDamping(0.1)
+```
 
-- **Versioned releases** are tagged builds such as `v0.4.0`.
-- **Nightlies** are dated prereleases built automatically from the default branch when it changes.
+So `vehicle.weight` and live Rigidbody `body.mass` do not get conflated.
 
-Nightlies are for testing. Use a versioned release when you want a fixed build.
+## High-ceiling stable APIs
+
+### Tuning
+
+```lua
+local tuning = sled.getTuning()
+local controller = tuning.getController()
+controller.set("clutchRpmMin", 4500)
+controller.set("clutchRpmMax", 8200)
+
+local suspension = tuning.getSuspension()
+suspension.set("antiRollBarFactor", 0.25)
+```
+
+Property bags expose `keys()`, `get()`, `set()` and `isWritable()` so advanced mods can enumerate stable named properties without using obfuscated fields.
+
+### Graphics and materials
+
+```lua
+local hood = sled.getRenderers("hood")
+if hood[1] then
+    local material = hood[1].getMaterial()
+    if material then
+        material.setColor(sledders.color(1, 0, 0))
+    end
+end
+```
+
+The visual layer exposes renderer state, per-instance materials, shader property checks, colors, floats and shader keywords.
+
+### Native HUD
+
+```lua
+sledders.hud.setElementVisible("rpmMeter", false)
+local speed = sledders.hud.get("speedMeter")
+if speed then
+    speed.setUnit("km/h")
+end
+```
+
+Whole-HUD hiding is owner-scoped so one mod does not casually steal another mod's HUD state.
+
+### Camera and projection
+
+```lua
+local p = sled.getPos()
+local screen = sledders.camera.worldToGui(p)
+
+sledders.camera.setMode("DroneMode")
+sledders.camera.setDroneDistance(12)
+```
+
+The camera service includes native Sledders camera modes, free camera, photo-mode controls, world/screen/GUI conversion and screen rays.
+
+### World
+
+```lua
+sledders.world.snow.setCondition("Powder")
+sledders.world.time.setTimeOfDay(14.5)
+sledders.world.weather.set("Clear")
+```
+
+World services cover current snow, time, weather and fuel-system/station state where the current game provides reliable mutation paths.
+
+### Audio
+
+```lua
+local playing = sledders.audio.getPlayingSources()
+for _, source in ipairs(playing) do
+    print(source.getName(), source.getVolume())
+end
+```
+
+Mods can inspect/control Unity `AudioSource`s, read PCM data from accessible `AudioClip`s, load local WAV files, create owned audio sources, trigger a safe set of native Sledders/Wwise SFX and manipulate native audio presets.
+
+### Scene objects, physics queries and assets
+
+```lua
+local hit = sledders.physics.raycast(
+    sled.getPos(),
+    sledders.vector3(0, -1, 0),
+    20
+)
+
+local trees = sledders.scene.find("Tree", 64)
+```
+
+AssetBundles can be loaded only from inside the mod directory. Instantiated runtime objects are tracked and cleaned up with the mod.
+
+## Input
+
+Simple mods can use the lightweight input API:
+
+```lua
+sledders.input.onPressed("ctrl+h", function()
+    print("Ctrl+H")
+end)
+```
+
+Advanced mods can inspect the game's actual Input System:
+
+```lua
+local actions = sledders.input.native.actions()
+```
+
+## Folder mods
+
+For multiple files:
+
+```text
+Sledders/LuaMods/MyMod/
+  main.lua
+  manifest.lua
+  other.lua
+```
+
+Example `manifest.lua`:
+
+```lua
+return {
+    id = "example.my-mod",
+    name = "My Mod",
+    author = "Me",
+    version = "1.0.0",
+    api = "3.2"
+}
+```
+
+Use `require("other")` from `main.lua`.
+
+## Developer reflection
+
+`sledders.dev` exists for reverse engineering and unusual experiments. It is intentionally **not** the expected path for ordinary tuning, graphics, HUD, camera, audio or world mods.
+
+It requires both:
+
+1. `permissions = { "dev" }` in the mod manifest; and
+2. `EnableDevApi = true` in `UserData/SleddersLua/config.json`.
+
+It is disabled by default.
+
+## Current-build binding assurance
+
+The repository contains `tests/bindings/current.json`, generated from the current Sledders managed assembly used during API development, plus `tools/audit_assembly.py`.
+
+Maintainers can check a locally owned game assembly with:
+
+```text
+python tools/audit_assembly.py "C:\path\to\Assembly-CSharp.dll" tests/bindings/current.json
+```
+
+The contract checks exact fields and method signatures. It is a compatibility gate, not a replacement for in-game smoke tests.
+
+## API reference and examples
+
+- Compact complete reference: [`docs/API.api`](docs/API.api)
+- Runnable mods: [`examples/`](examples/)
+- Maintainer/build notes: [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)
+
+## Errors and hot reload
+
+A broken repeating callback is suspended instead of throwing every frame.
+
+During hot reload the runtime prepares the replacement VM before unloading the working one. Syntax/top-level errors leave the working copy active. Storage is handed from the old VM to the replacement so rapid edits do not intentionally roll state backward.
 
 ## Source and licensing
 
 Sledders Lua Runtime is MIT licensed. See [`LICENSE`](LICENSE).
 
-MoonSharp is redistributed in binary releases under its own BSD license. MelonLoader is an external requirement and is not bundled. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+MoonSharp is redistributed in binary releases under its BSD-style license. MelonLoader is an external requirement and is not bundled. Sledders/Unity assemblies are not distributed by this project.
 
-Sledders Lua Runtime is an independent modding project and is not affiliated with Hanki Games, MelonLoader, or MoonSharp.
+This project is independent and is not affiliated with Hanki Games, MelonLoader or MoonSharp.

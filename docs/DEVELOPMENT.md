@@ -1,6 +1,19 @@
 # Development
 
-This is maintainer documentation. Players installing the runtime or writing Lua mods should use the main README and the website instead.
+This is maintainer documentation. Players installing the runtime or writing Lua mods should use the main README and website instead.
+
+## Design target
+
+Sledders Lua should be able to act as the default general-purpose modding framework for Sledders:
+
+- trivial mods should fit in one readable Lua file;
+- normal mods should use semantic Sledders APIs rather than reflection;
+- writable state should normally have a matching setter/mutator;
+- vehicle definition, live physics and derived telemetry must not be conflated;
+- advanced tuning/graphics/HUD/camera/audio/world mods must have supported stable surfaces;
+- `sledders.dev` is the version-sensitive escape hatch, not the normal development path.
+
+Promote a binding to the stable API only when its current-build anchor and semantics are understood. Keep obfuscated/uncertain behavior in developer discovery until validated.
 
 ## Build
 
@@ -14,9 +27,9 @@ Requirements:
 pwsh ./scripts/build.ps1
 ```
 
-The project targets .NET Framework 4.7.2 because that is the runtime used by the current Sledders/MelonLoader setup. Game and Unity assemblies are not copied into this repository; game access is resolved at runtime through the compatibility layer.
+The runtime targets .NET Framework 4.7.2 for the current Sledders/MelonLoader environment. Game and Unity assemblies are not compiled into or copied into the project; runtime access stays reflection/metadata driven.
 
-To install a local build into Sledders:
+Install a local build:
 
 ```powershell
 pwsh ./scripts/install-dev.ps1 -GameDir "C:\Path\To\Sledders"
@@ -28,62 +41,122 @@ pwsh ./scripts/install-dev.ps1 -GameDir "C:\Path\To\Sledders"
 pwsh ./scripts/package.ps1
 ```
 
-The release ZIP contains the runtime DLL, MoonSharp, the Lua API reference, examples, and license notices. It does not contain MelonLoader or Sledders files.
+The release ZIP contains the runtime DLL, MoonSharp, API reference, examples and license notices. It must not contain MelonLoader or Sledders game assemblies.
 
-## API changes
+## Audit a Sledders update
 
-Keep common operations on the object a Lua author already has. Prefer Sledders concepts over Unity internals: litres instead of a normalized fuel field, `sled.setHeadlights()` instead of a reflected light component, and local sled motion for `getVel`/`setVel`/`addVel`.
-
-Use `sledders.dev` to investigate a system, then add a normal binding only after its behavior has been tested in game. Do not publish API entries that only work in theory or routinely return `nil` on the current game build.
-
-## Versioned releases
-
-The source version must match the release tag.
-
-Set the version:
+The repository contains a metadata contract for the currently audited game assembly, but not the DLL itself.
 
 ```powershell
-python tools/version.py set 0.4.0
+python tools/audit_assembly.py `
+  "C:\Path\To\Sledders_Data\Managed\Assembly-CSharp.dll" `
+  tests/bindings/current.json
 ```
 
-Commit that change, then tag the same commit:
+The contract verifies current exact fields and method signatures used by stable bindings. A green metadata audit proves shape compatibility only; it does not prove units, ownership or live behavior.
 
-```powershell
-git tag v0.4.0
-git push origin v0.4.0
-```
+When Sledders updates:
 
-`release.yml` builds, checks the Lua examples, packages the runtime, and creates the GitHub release. Tags with a suffix such as `v0.4.0-rc.1` are prereleases.
+1. run the contract audit against the new DLL;
+2. investigate every failure before changing the contract;
+3. update exact bindings/fallbacks deliberately;
+4. run both manual in-game smoke tests;
+5. only then bless the new contract/fingerprint.
 
-After a stable release, set the next development version, for example:
+## API layering
 
-```powershell
-python tools/version.py set 0.5.0-dev
-```
+Preferred layers:
+
+1. **Convenience semantic API** — common sled/player/world operations.
+2. **Stable subsystem wrappers** — body, vehicle, tuning, structure, renderers/materials, HUD, camera, audio, scene, physics, assets.
+3. **Semantic property bags** — enumerable named advanced values without exposing obfuscated game names to Lua.
+4. **Developer reflection** — investigation and genuinely unusual/version-sensitive work.
+
+Avoid adding a 150-method god object when a subsystem object is clearer.
+
+## Setter rule
+
+For each getter, classify the value as:
+
+- writable state — provide a setter/mutator if the current build has a reliable path;
+- derived telemetry — read-only;
+- action/transition — expose a verb rather than pretending it is a property.
+
+Examples:
+
+- `vehicle.getWeight/setWeight` = vehicle-definition value;
+- `body.getMass/setMass` = live Rigidbody mass;
+- `sled.getSpeed` = derived read-only telemetry;
+- `sled.teleport` = action.
+
+## Runtime safety rules
+
+Stable APIs should:
+
+- reject NaN/infinity before values reach Unity/game state;
+- return `nil` for unavailable read values where appropriate;
+- return `false` for unsupported/failed mutations;
+- use handle-safe wrappers for scene objects;
+- clean runtime-created objects/resources on unload/scene change;
+- sandbox mod file access under the mod directory;
+- avoid holding proprietary game assemblies in the repo.
+
+## Hot reload
+
+The last working VM remains active while a candidate is syntax checked and top-level executed. Content fingerprints are used instead of timestamp-only change detection.
+
+Storage is flushed before preparation and the old VM's final `onUnload` storage snapshot is merged into the candidate. Keys changed by the candidate win. Temporary file I/O failures are retried.
+
+## Developer API
+
+Developer reflection requires:
+
+- `permissions = { "dev" }` in the mod manifest; and
+- `EnableDevApi = true` in `UserData/SleddersLua/config.json`.
+
+Do not weaken this gate merely to make a stable feature easier to implement. Promote a semantic wrapper instead.
 
 ## Release gate
 
-Before cutting an RC or stable tag:
+Before an RC/stable tag:
 
-1. Require green CI on the exact commit being released. The package dry run must complete; scripts/package.ps1 verifies that the ZIP file list and every archived file hash match the staged release tree.
-2. Run tests/manual/RuntimeSmokeTest.lua on the current Sledders build and require a fully passing Ctrl+Shift+5 safe API sweep.
-3. Run the permissioned tests/manual/DevSmokeTest folder test and require the read-only Ctrl+Shift+9 reflection sweep to pass.
-4. Only then set the release version, commit it, and create an RC or stable tag from that tested commit.
+1. Green CI on the exact source commit.
+2. Runtime build has zero errors; investigate warnings rather than normalizing them.
+3. Lua syntax/examples validation passes.
+4. Docs/site build passes.
+5. Package dry run verifies the archive file list and hashes.
+6. `tools/audit_assembly.py` passes against the current locally owned Sledders `Assembly-CSharp.dll`.
+7. `tests/manual/RuntimeSmokeTest.lua` passes its safe API sweep in game.
+8. Permissioned `tests/manual/DevSmokeTest` passes against the same game build.
+9. Exercise at least one representative mod from each major framework category touched by the release.
 
-A green build is not a substitute for the two in-game smoke tests; runtime reflection bindings can only be validated against the current game assemblies and live objects.
+Metadata and CI cannot replace live-game tests.
 
-## Nightly
+## Versioning
 
-`nightly.yml` runs daily and can also be started manually. When `main` has changed since the last nightly it creates a dated prerelease such as `nightly-20260826-1015-12abc34`. Previous nightlies are left intact.
+Current development line:
+
+- runtime `0.5.0-dev`
+- API `3.2`
+
+Set a release version with:
+
+```powershell
+python tools/version.py set 0.5.0
+```
+
+Tag the exact tested commit, for example `v0.5.0` or `v0.5.0-rc.1`.
 
 ## Documentation site
 
-The Pages workflow builds `site/pages` with `tools/build_site.py`. Preview it locally with:
+Preview locally:
 
 ```powershell
 pwsh ./scripts/serve-docs.ps1
 ```
 
-GitHub Pages must be enabled once per repository under **Settings > Pages > Source: GitHub Actions**. Until then, the Pages workflow still builds the site but skips deployment instead of failing.
+Or build directly:
 
-For the public repository named `sledderslua`, the project site can live at `https://donreagan.ca/sledderslua/` when `donreagan.ca` is already the custom domain of the owning GitHub Pages user/organization site. The project itself does not need a `CNAME` file in that setup.
+```text
+python tools/build_site.py --root . --output site-dist --repository Ronnie-Reagan/sledderslua
+```

@@ -37,7 +37,6 @@ namespace SleddersLuaRuntime.Api
         {
             _byId.Clear();
             _byObject.Clear();
-            _next = 1;
         }
     }
 }

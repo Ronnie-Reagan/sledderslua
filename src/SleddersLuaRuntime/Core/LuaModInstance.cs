@@ -21,7 +21,6 @@ namespace SleddersLuaRuntime.Core
         private readonly List<KeyBinding> _keyBindings = new List<KeyBinding>();
         private readonly Dictionary<string, DynValue> _moduleCache = new Dictionary<string, DynValue>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, DynValue> _scriptObjectCache = new Dictionary<string, DynValue>(StringComparer.Ordinal);
-        private readonly Dictionary<string, DateTime> _sourceTimes = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
         private int _nextHandle = 1;
         private readonly HashSet<string> _suspendedCallbacks = new HashSet<string>(StringComparer.Ordinal);
         private Script? _script;
@@ -43,6 +42,9 @@ namespace SleddersLuaRuntime.Core
         public RuntimeHost Host => _host;
         public StorageApi Storage => _storage ?? throw new InvalidOperationException("Storage not initialized.");
         public string SourceKey => _source.Key;
+        public string ModRoot => _source.ModuleRoot;
+        public string StateOwnerToken { get; } = Guid.NewGuid().ToString("N");
+        public string SourceFingerprint { get; private set; } = string.Empty;
 
         public double DrawR { get; private set; }
         public double DrawG { get; private set; }
@@ -90,6 +92,13 @@ namespace SleddersLuaRuntime.Core
             _scriptObjectCache[kind + ":" + handle.ToString()] = value;
         }
 
+        public void InvalidateSceneObjects()
+        {
+            RuntimeResourceRegistry.ReleaseOwner(StateOwnerToken);
+            _scriptObjectCache.Clear();
+            Handles.Clear();
+        }
+
         public void ValidateSourceSyntax()
         {
             var validator = new Script(CoreModules.Preset_SoftSandbox);
@@ -108,6 +117,13 @@ namespace SleddersLuaRuntime.Core
 
         public void Load()
         {
+            PrepareLoad(string.Empty);
+            Activate();
+        }
+
+        public void PrepareLoad(string fingerprint)
+        {
+            if (_script != null) throw new InvalidOperationException("Lua mod instance is already prepared.");
             if (!IsApiCompatible(Manifest.Api))
                 throw new InvalidOperationException($"Mod requires API '{Manifest.Api}', runtime provides '{RuntimeHost.ApiVersion}'.");
 
@@ -120,35 +136,86 @@ namespace SleddersLuaRuntime.Core
 
             string code = File.ReadAllText(_source.MainPath);
             _script.DoString(code, codeFriendlyName: _source.MainPath);
+            SourceFingerprint = fingerprint;
+        }
 
-            SnapshotSourceTimes();
+        public void Activate()
+        {
+            if (_script == null || _storage == null) throw new InvalidOperationException("Lua mod must be prepared before activation.");
+            if (Enabled) return;
+            _storage.Activate();
             Enabled = true;
             _suspendedCallbacks.Clear();
-
             CallCanonical("onLoad", Array.Empty<object?>());
         }
 
-        public void Unload(string reason)
+        public bool FlushStorage()
         {
-            if (_script == null) return;
+            if (_storage == null) return true;
+            bool ok = _storage.TrySave(out string? error);
+            if (!ok) RuntimeLog.Warn($"[{Manifest.Id}] Storage flush failed: {error}");
+            return ok;
+        }
+
+        public void MergeStorageBase(Dictionary<string, object?> snapshot, bool markDirty)
+        {
+            _storage?.MergeBaseSnapshot(snapshot, markDirty);
+        }
+
+        public Dictionary<string, object?> UnloadForReload(string reason, out bool saved)
+        {
+            if (_script == null || _storage == null)
+            {
+                saved = true;
+                return new Dictionary<string, object?>(StringComparer.Ordinal);
+            }
 
             if (Enabled)
             {
-                try
-                {
-                    CallCanonical("onUnload", new object?[] { reason });
-                }
-                catch
-                {
-                    // CallSafe already records script failures.
-                }
+                try { CallCanonical("onUnload", new object?[] { reason }); } catch { }
             }
+            Dictionary<string, object?> snapshot = _storage.ExportSnapshot();
+            saved = _storage.TrySave(out string? error);
+            if (!saved) RuntimeLog.Warn($"[{Manifest.Id}] Storage save during reload unload failed: {error}");
+            FinalizeUnload();
+            return snapshot;
+        }
 
-            try { _storage?.Save(); }
-            catch (Exception ex) { RuntimeLog.Warn($"[{Manifest.Id}] Storage save during unload failed: {ex.Message}"); }
+        public bool Unload(string reason)
+        {
+            if (_script == null) return true;
+            if (Enabled)
+            {
+                try { CallCanonical("onUnload", new object?[] { reason }); } catch { }
+            }
+            bool saved = true;
+            if (_storage != null)
+            {
+                saved = _storage.TrySave(out string? error);
+                if (!saved) RuntimeLog.Warn($"[{Manifest.Id}] Storage save during unload failed: {error}");
+            }
+            FinalizeUnload();
+            return saved;
+        }
 
-            SleddersGameBindings.ReleaseOverrides(Manifest.Id);
+        public void AbortPrepared()
+        {
+            if (Enabled) return;
+            SleddersGameBindings.ReleaseOverrides(StateOwnerToken);
+            RuntimeResourceRegistry.ReleaseOwner(StateOwnerToken);
+            _keyBindings.Clear();
+            _moduleCache.Clear();
+            _scriptObjectCache.Clear();
+            _suspendedCallbacks.Clear();
+            Handles.Clear();
+            _script = null;
+            _storage = null;
+        }
 
+        private void FinalizeUnload()
+        {
+            SleddersGameBindings.ReleaseOverrides(StateOwnerToken);
+            RuntimeResourceRegistry.ReleaseOwner(StateOwnerToken);
             Enabled = false;
             _keyBindings.Clear();
             _moduleCache.Clear();
@@ -202,19 +269,10 @@ namespace SleddersLuaRuntime.Core
             }
         }
 
-        public bool HasSourceChanged()
-        {
-            var current = EnumerateSourceFiles().ToDictionary(path => path, path => SafeWriteTime(path), StringComparer.OrdinalIgnoreCase);
-            if (current.Count != _sourceTimes.Count) return true;
-            foreach (var pair in current)
-            {
-                if (!_sourceTimes.TryGetValue(pair.Key, out DateTime previous) || previous != pair.Value) return true;
-            }
-            return false;
-        }
-
         public void DemandPermission(string permission)
         {
+            if (string.Equals(permission, "dev", StringComparison.OrdinalIgnoreCase) && !_host.Config.EnableDevApi)
+                throw new ScriptRuntimeException("Developer reflection is disabled by the runtime owner. Set EnableDevApi=true in UserData/SleddersLua/config.json and restart Sledders.");
             if (!Manifest.HasPermission(permission))
                 throw new ScriptRuntimeException($"Mod '{Manifest.Id}' does not have permission '{permission}'. Add it to manifest.lua permissions.");
         }
@@ -312,12 +370,6 @@ namespace SleddersLuaRuntime.Core
             }
         }
 
-        private void SnapshotSourceTimes()
-        {
-            _sourceTimes.Clear();
-            foreach (string file in EnumerateSourceFiles()) _sourceTimes[file] = SafeWriteTime(file);
-        }
-
         private IEnumerable<string> EnumerateSourceFiles()
         {
             if (string.Equals(_source.Key, _source.MainPath, StringComparison.OrdinalIgnoreCase))
@@ -330,12 +382,6 @@ namespace SleddersLuaRuntime.Core
                 foreach (string file in Directory.EnumerateFiles(_source.ModuleRoot, "*.lua", SearchOption.AllDirectories))
                     yield return Path.GetFullPath(file);
             }
-        }
-
-        private static DateTime SafeWriteTime(string path)
-        {
-            try { return File.GetLastWriteTimeUtc(path); }
-            catch { return DateTime.MinValue; }
         }
 
         private static void EnsureFunction(DynValue callback, string description)

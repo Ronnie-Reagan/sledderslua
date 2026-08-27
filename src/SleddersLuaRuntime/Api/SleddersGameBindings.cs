@@ -95,21 +95,29 @@ namespace SleddersLuaRuntime.Api
             if (now < _cachedLocalSledUntil && (_cachedLocalSled == null || IsValidSled(_cachedLocalSled)))
                 return _cachedLocalSled;
 
-            Type? exact = ReflectionBridge.FindTypeExact("SnowmobileController");
-            object? best = FindBestSledOfType(exact);
+            object? best = SleddersBindingResolver.FindLocalSled();
+            if (best != null && !IsValidSled(best))
+                best = null;
 
-            if (best == null)
+            if (best == null && !SleddersBindingResolver.HasExactLocalSledBinding)
             {
-                Type[] fallbacks = ReflectionBridge.FindTypes("SnowmobileController", 24)
-                    .Where(t => !Contains(t.Name, "Remote") && !Contains(t.Name, "Preview") && !t.IsAbstract)
-                    .OrderByDescending(t => string.Equals(t.Name, "SnowmobileController", StringComparison.OrdinalIgnoreCase))
-                    .ToArray();
+                SleddersBindingResolver.ReportFallbackOnce();
+                Type? exact = ReflectionBridge.FindTypeExact("SnowmobileController");
+                best = FindBestSledOfType(exact);
 
-                foreach (Type type in fallbacks)
+                if (best == null)
                 {
-                    best = FindBestSledOfType(type);
-                    if (best != null)
-                        break;
+                    Type[] fallbacks = ReflectionBridge.FindTypes("SnowmobileController", 24)
+                        .Where(t => !Contains(t.Name, "Remote") && !Contains(t.Name, "Preview") && !t.IsAbstract)
+                        .OrderByDescending(t => string.Equals(t.Name, "SnowmobileController", StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+
+                    foreach (Type type in fallbacks)
+                    {
+                        best = FindBestSledOfType(type);
+                        if (best != null)
+                            break;
+                    }
                 }
             }
 
@@ -143,17 +151,18 @@ namespace SleddersLuaRuntime.Api
 
         public static object? FindPlayerObject()
         {
+            object? exact = SleddersBindingResolver.FindLocalPlayer();
+            if (exact != null || SleddersBindingResolver.HasExactLocalPlayerBinding)
+                return exact;
+
             foreach (string typeName in new[] { "PlayerManager", "PlayerInstancier" })
             {
                 Type? type = ReflectionBridge.FindTypeExact(typeName);
-                if (type == null)
-                    continue;
-
+                if (type == null) continue;
                 object? candidate = ReflectionBridge.FindObjectsOfType(type, 16)
                     .OrderByDescending(ScorePlayerObject)
                     .FirstOrDefault();
-                if (candidate != null)
-                    return candidate;
+                if (candidate != null) return candidate;
             }
             return null;
         }
@@ -199,6 +208,9 @@ namespace SleddersLuaRuntime.Api
 
         public static object? GetVehicleDefinition(object sled)
         {
+            if (SleddersBindingResolver.TryGetVehicle(sled, out object? exactVehicle))
+                return exactVehicle;
+
             if (TryCallAny(sled,
                     new[] { "GetVehicle", "GetVehicleDefinition", "GetVehicleScriptableObject", "KCBOABAJENP" },
                     Array.Empty<object?>(), out object? result) &&
@@ -231,11 +243,25 @@ namespace SleddersLuaRuntime.Api
 
         public static object? GetControllerBase(object sled)
         {
+            if (SleddersBindingResolver.TryGetControllerBase(sled, out object? exact))
+                return exact;
             return TryGetAny(sled, out object? value, "controllerBase", "ControllerBase") ? value : null;
+        }
+
+        public static object? GetStructure(object sled)
+        {
+            if (SleddersBindingResolver.TryGetStructure(sled, out object? exact))
+                return exact;
+            object? controllerBase = GetControllerBase(sled);
+            if (controllerBase != null && TryGetAny(controllerBase, out object? value, "MONBCLKFJPG", "structure", "snowmobileStructure"))
+                return value;
+            return null;
         }
 
         public static object? GetRespawnable(object sled)
         {
+            if (SleddersBindingResolver.TryGetRespawnable(sled, out object? exact))
+                return exact;
             object? controllerBase = GetControllerBase(sled);
             if (controllerBase != null && TryGetAny(controllerBase, out object? respawnable, "respawnable", "Respawnable") && respawnable != null)
                 return respawnable;
@@ -252,7 +278,14 @@ namespace SleddersLuaRuntime.Api
             if (ReferenceEquals(sled, _cachedBodyOwner) && _cachedBody != null)
                 return _cachedBody;
 
-            // Prefer controllerBase.mainBody over guessed child rigidbodies.
+            // Prefer exact current-build controllerBase.mainBody over guessed child rigidbodies.
+            if (SleddersBindingResolver.TryGetMainBody(sled, out object? exactBody) && exactBody != null)
+            {
+                _cachedBodyOwner = sled;
+                _cachedBody = exactBody;
+                return exactBody;
+            }
+
             object? controllerBase = GetControllerBase(sled);
             if (controllerBase != null && TryGetAny(controllerBase, out object? mainBody, "mainBody", "MainBody") && mainBody != null)
             {
@@ -511,30 +544,64 @@ namespace SleddersLuaRuntime.Api
         {
             if (string.IsNullOrWhiteSpace(owner))
                 return SetHeadlights(sled, enabled);
+            if (!IsValidSled(sled))
+                return false;
+
+            HeadlightOverrideEntry? entry;
+            bool created = false;
+            bool baselineAdded = false;
+            bool previousEnabled = false;
+            long previousSequence = 0;
 
             lock (SemanticStateGate)
             {
-                if (!HeadlightOverrides.Any(x => ReferenceEquals(x.Sled, sled)))
+                bool hasAnyOverride = HeadlightOverrides.Any(x => ReferenceEquals(x.Sled, sled));
+                if (!hasAnyOverride)
                 {
                     bool? native = ReadHeadlightStateDirect(sled);
-                    if (native.HasValue)
-                        HeadlightBaselines[sled] = native.Value;
+                    if (!native.HasValue)
+                        return false; // A forced state must be safely restorable.
+                    HeadlightBaselines[sled] = native.Value;
+                    baselineAdded = true;
                 }
 
-                HeadlightOverrideEntry? entry = HeadlightOverrides
-                    .FirstOrDefault(x => ReferenceEquals(x.Sled, sled) &&
-                                         string.Equals(x.Owner, owner, StringComparison.OrdinalIgnoreCase));
+                entry = HeadlightOverrides.FirstOrDefault(x =>
+                    ReferenceEquals(x.Sled, sled) &&
+                    string.Equals(x.Owner, owner, StringComparison.Ordinal));
                 if (entry == null)
                 {
                     entry = new HeadlightOverrideEntry { Sled = sled, Owner = owner };
                     HeadlightOverrides.Add(entry);
+                    created = true;
+                }
+                else
+                {
+                    previousEnabled = entry.Enabled;
+                    previousSequence = entry.Sequence;
                 }
 
                 entry.Enabled = enabled;
                 entry.Sequence = ++_semanticSequence;
             }
 
-            return ApplyHeadlightState(sled, enabled, refreshVisuals: true);
+            if (ApplyHeadlightState(sled, enabled, refreshVisuals: true))
+                return true;
+
+            // Do not leave a managed override registered if the physical mutation failed.
+            lock (SemanticStateGate)
+            {
+                if (created)
+                    HeadlightOverrides.Remove(entry!);
+                else if (entry != null)
+                {
+                    entry.Enabled = previousEnabled;
+                    entry.Sequence = previousSequence;
+                }
+
+                if (baselineAdded && !HeadlightOverrides.Any(x => ReferenceEquals(x.Sled, sled)))
+                    HeadlightBaselines.Remove(sled);
+            }
+            return false;
         }
 
 
@@ -642,6 +709,12 @@ namespace SleddersLuaRuntime.Api
             lock (SemanticStateGate)
             {
                 HeadlightOverrides.RemoveAll(x => !IsValidSled(x.Sled));
+                object[] staleBaselines = HeadlightBaselines.Keys
+                    .Where(sled => !IsValidSled(sled) || !HeadlightOverrides.Any(x => ReferenceEquals(x.Sled, sled)))
+                    .ToArray();
+                foreach (object sled in staleBaselines)
+                    HeadlightBaselines.Remove(sled);
+
                 active = HeadlightOverrides
                     .GroupBy(x => x.Sled, ReferenceComparer.Instance)
                     .Select(group => group.OrderByDescending(x => x.Sequence).First())
@@ -659,7 +732,7 @@ namespace SleddersLuaRuntime.Api
 
         private static bool ApplyHeadlightState(object sled, bool enabled, bool refreshVisuals)
         {
-            bool changed = false;
+            bool changed = SleddersBindingResolver.TrySetHeadlightState(sled, enabled);
 
             foreach (string member in HeadlightBoolMembers)
             {
@@ -683,10 +756,14 @@ namespace SleddersLuaRuntime.Api
 
             // Forced mode also refreshes the native headlight controller immediately.
             bool visualEnabled = enabled && (IsEngineOn(sled) ?? true);
-            if (TryGetAny(sled, out object? controllerBase, "controllerBase") &&
-                controllerBase != null &&
-                TryGetAny(controllerBase, out object? nativeLights, "headLightController", "headlightController") &&
-                nativeLights != null)
+            object? nativeLights = null;
+            if (!SleddersBindingResolver.TryGetHeadlightController(sled, out nativeLights))
+            {
+                if (TryGetAny(sled, out object? controllerBase, "controllerBase") && controllerBase != null &&
+                    TryGetAny(controllerBase, out object? fallbackLights, "headLightController", "headlightController"))
+                    nativeLights = fallbackLights;
+            }
+            if (nativeLights != null)
             {
                 if (TryCallAny(nativeLights,
                         new[] { "Refresh", "SetState", "SetEnabled" },
@@ -708,6 +785,8 @@ namespace SleddersLuaRuntime.Api
 
         private static bool? ReadHeadlightStateDirect(object sled)
         {
+            if (SleddersBindingResolver.TryGetHeadlightState(sled, out bool exactState))
+                return exactState;
             if (TryGetAny(sled, out object? raw, HeadlightBoolMembers) && raw is bool state)
                 return state;
 
@@ -759,6 +838,8 @@ namespace SleddersLuaRuntime.Api
 
         public static double? GetFuelCapacity(object sled)
         {
+            if (SleddersBindingResolver.TryGetFuelCapacity(sled, out double exactCapacity))
+                return exactCapacity;
             if (TryGetAnyOrGetter(sled, out object? value, FuelCapacityMembers))
                 return ToDouble(value);
 
@@ -792,6 +873,8 @@ namespace SleddersLuaRuntime.Api
             if (capacity.HasValue && UsesNormalizedFuel(sled, currentRaw ?? 1.0, capacity.Value))
                 nativeAmount = capacity.Value <= 0.0 ? 0.0 : litres / capacity.Value;
 
+            if (SleddersBindingResolver.TrySetFuelNormalized(sled, nativeAmount))
+                return true;
             if (TryCallAny(sled, new[] { "SetFuel" }, new object?[] { nativeAmount }, out _))
                 return true;
 
@@ -806,8 +889,19 @@ namespace SleddersLuaRuntime.Api
             return false;
         }
 
+        public static bool AddFuel(object sled, double litres)
+        {
+            double? capacity = GetFuelCapacity(sled);
+            if (capacity.HasValue && capacity.Value > 0.0 && SleddersBindingResolver.TryAddFuelNormalized(sled, litres / capacity.Value))
+                return true;
+            double? current = GetFuel(sled);
+            return current.HasValue && SetFuel(sled, current.Value + litres);
+        }
+
         private static double? GetNativeFuel(object sled)
         {
+            if (SleddersBindingResolver.TryGetFuelNormalized(sled, out double exactFuel))
+                return exactFuel;
             return TryGetAnyOrGetter(sled, out object? value, FuelMembers) ? ToDouble(value) : null;
         }
 
@@ -825,11 +919,13 @@ namespace SleddersLuaRuntime.Api
 
         public static double? GetRpm(object sled)
         {
+            if (SleddersBindingResolver.TryGetRpm(sled, out double exactRpm)) return exactRpm;
             return TryGetAnyOrGetter(sled, out object? value, RpmMembers) ? ToDouble(value) : null;
         }
 
         public static double? GetThrottle(object sled)
         {
+            if (SleddersBindingResolver.TryGetThrottle(sled, out double exactThrottle)) return exactThrottle;
             if (TryGetAnyOrGetter(sled, out object? value, ThrottleMembers))
                 return ToDouble(value);
 
@@ -843,6 +939,7 @@ namespace SleddersLuaRuntime.Api
 
         public static bool? IsEngineOn(object sled)
         {
+            if (SleddersBindingResolver.TryGetEngine(sled, out bool exactState)) return exactState;
             if (TryGetAnyOrGetter(sled, out object? value, EngineOnMembers) && value is bool state)
                 return state;
             return null;
@@ -850,7 +947,8 @@ namespace SleddersLuaRuntime.Api
 
         public static bool SetEngineRunning(object sled, bool running)
         {
-            // Use the game setter so its fuel guard and controller state stay in sync.
+            // Use the exact game setter so its fuel guard and controller state stay in sync.
+            if (SleddersBindingResolver.TrySetEngine(sled, running)) return true;
             if (TryCallAny(sled, new[] { "SetEngineOnOff" }, new object?[] { running }, out _))
                 return true;
 

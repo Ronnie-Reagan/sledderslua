@@ -23,10 +23,10 @@ namespace SleddersLuaRuntime.Api
             table.Set("setVolume", DynValue.NewCallback((ctx, args) =>
             {
                 int offset = MethodOffset(args, table);
-                if (args.Count <= offset || args[offset].Type != DataType.Number)
-                    throw new ScriptRuntimeException("audio.setVolume(value) expects a number from 0 to 1.");
-                return DynValue.NewBoolean(SetVolume(args[offset].Number));
+                double value = FrameworkApiUtil.RequireFiniteNumber(args, offset, "audio.setVolume(value)");
+                return DynValue.NewBoolean(SetVolume(value));
             }));
+            AudioRuntimeApi.Enhance(mod, table);
             return table;
         }
 

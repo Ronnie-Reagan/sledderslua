@@ -1,0 +1,1140 @@
+{
+  "schema": 1,
+  "gameAssembly": {
+    "sha256": "f453622ec1a516598ba26c4d19c61b1d7bbe03f446b94f6c8b52bd478412abd7"
+  },
+  "types": {
+    "AudioManagerWwise": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "PlayButtonClickSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlayButtonHighlightSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlayItemClickSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlayTuningButtonClickSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlayErrorSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlaySnowmobileSelectSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlaySkiSelectSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlayWrapSelectSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlayDriverSelectSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlayEnterPhotoModeSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlayExitPhotoModeSfx",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "PlayTakePhotoSfx",
+          "params": [],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "AudioPreset": {
+      "fields": {
+        "presetName": "System.String",
+        "presetType": "DJFENBJDKKI",
+        "description": "System.String",
+        "masterVolume": "System.Int32",
+        "engineSoundVolume": "System.Int32",
+        "ambientVolume": "System.Int32",
+        "sfxVolume": "System.Int32",
+        "musicVolume": "System.Int32",
+        "enhanceBass": "System.Boolean",
+        "enhanceTreble": "System.Boolean",
+        "spatialAudio": "System.Boolean",
+        "dynamicRange": "System.Boolean"
+      },
+      "methods": []
+    },
+    "AudioPresetManager": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "AudioPresetManager"
+        },
+        {
+          "name": "GetCurrentPreset",
+          "params": [],
+          "return": "AudioPreset"
+        },
+        {
+          "name": "GetAllPresets",
+          "params": [],
+          "return": "System.Collections.Generic.List`1<AudioPreset>"
+        },
+        {
+          "name": "ApplyPresetByName",
+          "params": [
+            "System.String"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "ApplyPreset",
+          "params": [
+            "AudioPreset"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "ResetToDefaults",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "SaveCurrentSettingsAsPreset",
+          "params": [
+            "System.String",
+            "System.String"
+          ],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "CameraFollower": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "get_currentCameraMode",
+          "params": [],
+          "return": "DFDCJMKAKPC"
+        },
+        {
+          "name": "SetSelectedCameraMode",
+          "params": [
+            "DFDCJMKAKPC"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "NextCameraMode",
+          "params": [
+            "DFDCJMKAKPC"
+          ],
+          "return": "DFDCJMKAKPC"
+        },
+        {
+          "name": "SaveSelectedCameraMode",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "GetDroneDistance",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "SetDroneDistance",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetDroneHeightOffset",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "ResetDroneHeightOffset",
+          "params": [],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "Controller": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "Controller"
+        },
+        {
+          "name": "get_SnowmobileController",
+          "params": [],
+          "return": "SnowmobileController"
+        }
+      ]
+    },
+    "DroneModeCameraController": {
+      "fields": {
+        "movementSpeed": "System.Single",
+        "maxDistance": "System.Single"
+      },
+      "methods": [
+        {
+          "name": "get_MovementSpeed",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "set_MovementSpeed",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "get_MaxDistance",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "set_MaxDistance",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "get_CurrentMovementMode",
+          "params": [],
+          "return": "EILMFBLEBJI"
+        },
+        {
+          "name": "set_CurrentMovementMode",
+          "params": [
+            "EILMFBLEBJI"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetTreeCollisionEnabled",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "EngineSoundControllerWwise": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "get_CurrentEngineRTPC",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "get_CurrentEngineTypeValue",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "SetEngineType",
+          "params": [
+            "AJIPMENAPIM"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "StartEngineSound",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "StopEngineSound",
+          "params": [],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "FreeCameraController": {
+      "fields": {
+        "droneCameraController": "DroneModeCameraController"
+      },
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "FreeCameraController"
+        },
+        {
+          "name": "get_TrackedPosition",
+          "params": [],
+          "return": "UnityEngine.Vector3"
+        },
+        {
+          "name": "get_CurrentMode",
+          "params": [],
+          "return": "NAGGBACGFMC"
+        },
+        {
+          "name": "ActivateCamera",
+          "params": [
+            "NAGGBACGFMC",
+            "UnityEngine.Vector3"
+          ],
+          "return": "System.Boolean"
+        },
+        {
+          "name": "DeactivateCamera",
+          "params": [
+            "NAGGBACGFMC"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "ForceExitAllModes",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "IsAnyModeActive",
+          "params": [],
+          "return": "System.Boolean"
+        },
+        {
+          "name": "IsModeActive",
+          "params": [
+            "NAGGBACGFMC"
+          ],
+          "return": "System.Boolean"
+        },
+        {
+          "name": "SetCameraMovementEnabled",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "get_IsCameraMovementEnabled",
+          "params": [],
+          "return": "System.Boolean"
+        },
+        {
+          "name": "get_DroneCameraController",
+          "params": [],
+          "return": "DroneModeCameraController"
+        }
+      ]
+    },
+    "FuelManager": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "FuelManager"
+        },
+        {
+          "name": "SetHostFuelUsageEnabled",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "get_CanFuelRescue",
+          "params": [],
+          "return": "System.Boolean"
+        },
+        {
+          "name": "PerformFuelRescue",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "get_SceneHasFuelStation",
+          "params": [],
+          "return": "System.Boolean"
+        },
+        {
+          "name": "get_FuelUsageEnabledEffective",
+          "params": [],
+          "return": "System.Boolean"
+        }
+      ]
+    },
+    "FuelStation": {
+      "fields": {
+        "refuelEnabled": "System.Boolean"
+      },
+      "methods": [
+        {
+          "name": "FindNearestActivated",
+          "params": [
+            "UnityEngine.Vector3"
+          ],
+          "return": "FuelStation"
+        },
+        {
+          "name": "get_RefuelEnabled",
+          "params": [],
+          "return": "System.Boolean"
+        },
+        {
+          "name": "get_DiscoveryPoint",
+          "params": [],
+          "return": "DiscoveryPoint"
+        }
+      ]
+    },
+    "HudController": {
+      "fields": {
+        "speedMeter": "Meter2",
+        "rpmMeter": "Meter2",
+        "shovelIcon": "UnityEngine.GameObject",
+        "stanceIcons": "UnityEngine.GameObject",
+        "highStanceIcon": "UnityEngine.GameObject",
+        "lowStanceIcon": "UnityEngine.GameObject",
+        "switchbackLeftIcon": "UnityEngine.GameObject",
+        "switchbackRightIcon": "UnityEngine.GameObject",
+        "corneringLeftIcon": "UnityEngine.GameObject",
+        "corneringRightIcon": "UnityEngine.GameObject",
+        "compassRoot": "UnityEngine.Transform",
+        "speedMeterRoot": "UnityEngine.Transform",
+        "raceStateDocument": "UnityEngine.UIElements.UIDocument",
+        "hudDocument": "UnityEngine.UIElements.UIDocument",
+        "engineOnOffContainer": "UnityEngine.UIElements.VisualElement",
+        "fuelRescueContainer": "UnityEngine.UIElements.VisualElement",
+        "spawnPopUp": "UnityEngine.UIElements.VisualElement",
+        "challengeAreaNotify": "UnityEngine.UIElements.Button",
+        "joinChallengeContainer": "UnityEngine.UIElements.VisualElement",
+        "holdInputNotify": "UnityEngine.GameObject"
+      },
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "HudController"
+        },
+        {
+          "name": "ShowLetterbox",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "ShowBannerNotification",
+          "params": [
+            "System.String",
+            "System.String"
+          ],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "HudVisibilityController": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "HudVisibilityController"
+        },
+        {
+          "name": "RequestHideHud",
+          "params": [
+            "System.Object"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "ReleaseHideRequest",
+          "params": [
+            "System.Object"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "ForceShowHud",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "IsHudVisible",
+          "params": [],
+          "return": "System.Boolean"
+        }
+      ]
+    },
+    "InputSystemController": {
+      "fields": {
+        "inputActions": "JLPGEGBOFIP",
+        "currentController": "DLLPCGELMPC"
+      },
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "InputSystemController"
+        },
+        {
+          "name": "SetSystemState",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetUIInputSystemState",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "JLPGEGBOFIP": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "FindAction",
+          "params": [
+            "System.String",
+            "System.Boolean"
+          ],
+          "return": "UnityEngine.InputSystem.InputAction"
+        },
+        {
+          "name": "GetEnumerator",
+          "params": [],
+          "return": "System.Collections.Generic.IEnumerator`1<UnityEngine.InputSystem.InputAction>"
+        },
+        {
+          "name": "Enable",
+          "params": [],
+          "return": "System.Void"
+        },
+        {
+          "name": "Disable",
+          "params": [],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "Meter2": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "SetValue",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetUnit",
+          "params": [
+            "System.String"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetReverseText",
+          "params": [
+            "System.Boolean",
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "PhotoModeController": {
+      "fields": {},
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "PhotoModeController"
+        },
+        {
+          "name": "get_PhotoModeOn",
+          "params": [],
+          "return": "System.Boolean"
+        },
+        {
+          "name": "SetPhotoMode",
+          "params": [
+            "System.Boolean",
+            "SnowmobileControllerBase"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "GetFieldOfView",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "FieldOfView",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "get_CurrentRollValue",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "ViewRoll",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "FocusDistance",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "FocalLength",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Aperture",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Exposure",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Contrast",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Saturation",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Vignette",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Bloom",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "BloomThreshold",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Temperature",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "TimeOfDay",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Snow",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Fog",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "Storm",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetDOFEnabled",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "DisableAllFilters",
+          "params": [],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "PlayerManager": {
+      "fields": {
+        "driverTransform": "UnityEngine.Transform",
+        "bodyOffset": "UnityEngine.Vector3",
+        "currentDrivingStance": "NFLKBPODNNJ",
+        "currentSwitchbackStance": "PAAOJFJDBKH",
+        "isPerformingAction": "System.Boolean"
+      },
+      "methods": []
+    },
+    "Shock": {
+      "fields": {
+        "mass": "System.Double",
+        "maxCompression": "System.Double",
+        "soft": "ShockSettings",
+        "hard": "ShockSettings",
+        "compression": "System.Double",
+        "velocity": "System.Double",
+        "avarageVelocity": "System.Double"
+      },
+      "methods": []
+    },
+    "ShockSettings": {
+      "fields": {
+        "springFactor": "System.Double",
+        "damperFactor": "System.Double",
+        "fastCompressionVelocityThreshold": "System.Double",
+        "fastReboundVelocityThreshold": "System.Double",
+        "compressionRatio": "System.Double",
+        "compressionFastRatio": "System.Double",
+        "reboundRatio": "System.Double",
+        "reboundFastRatio": "System.Double"
+      },
+      "methods": []
+    },
+    "SnowConditionController": {
+      "fields": {
+        "snowHardness": "System.Single"
+      },
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "SnowConditionController"
+        },
+        {
+          "name": "GetSnowCondition",
+          "params": [],
+          "return": "IPNKOKCPFBJ"
+        },
+        {
+          "name": "SetSnowCondition",
+          "params": [
+            "IPNKOKCPFBJ"
+          ],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "SnowmobileController": {
+      "fields": {
+        "controllerBase": "SnowmobileControllerBase",
+        "isEngineOn": "System.Boolean",
+        "isHeadlightOn": "System.Boolean",
+        "GJKCDNOBELI": "GDDIGGEKEPD",
+        "ADGKAPLIGNP": "SuspensionController",
+        "throttleExponent": "System.Single",
+        "driverTorgueFactorRoll": "System.Single",
+        "driverTorgueFactorPitch": "System.Single",
+        "snowmobileTorgueFactor": "System.Single",
+        "enableFuelConsumption": "System.Boolean",
+        "fuelUsageMultiplier": "System.Single",
+        "rpmSensitivity": "System.Single",
+        "rpmSensitivityDown": "System.Single",
+        "rpmSoundVariation": "System.Single",
+        "minThrottleOnClutchEngagement": "System.Single",
+        "clutchRpmMin": "System.Single",
+        "clutchRpmMax": "System.Single",
+        "wheelieThreshold": "System.Single",
+        "drowningDepth": "System.Single",
+        "drowningTime": "System.Single"
+      },
+      "methods": [
+        {
+          "name": "get_Fuel",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "get_FuelCapacity",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "SetFuel",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "AddFuel",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "get_Rpm",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "get_RpmForSpeedoMeter",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "get_TrackSpeedForSpeedoMeter",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "get_MaxDisplayRpm",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "SetEngineOnOff",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "get_Vehicle",
+          "params": [],
+          "return": "VehicleScriptableObject"
+        },
+        {
+          "name": "SetParking",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "ShowVehicle",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "IsInAir",
+          "params": [],
+          "return": "System.Boolean"
+        },
+        {
+          "name": "IsWheelie",
+          "params": [],
+          "return": "System.Nullable`1<System.Boolean>"
+        }
+      ]
+    },
+    "SnowmobileControllerBase": {
+      "fields": {
+        "mainBody": "UnityEngine.Rigidbody",
+        "respawnable": "Respawnable",
+        "headLightController": "HeadLight",
+        "MONBCLKFJPG": "SnowmobileStructure",
+        "character": "PlayerManager",
+        "skisMaxAngle": "System.Single",
+        "enableVerticalWeightTransfer": "System.Boolean",
+        "horizontalWeightTransferMode": "HBHPJMEJLHM",
+        "toeAngle": "System.Single",
+        "driverLowStanceTargetPositionY": "System.Single",
+        "switchbackJump": "UnityEngine.Vector2",
+        "hopOverPreJump": "System.Single",
+        "switchBackLeanDistance": "System.Single",
+        "trailLeanDistance": "System.Single",
+        "switchbackTransitionTime": "System.Single"
+      },
+      "methods": []
+    },
+    "SnowmobileStructure": {
+      "fields": {
+        "hoodParts": "UnityEngine.MeshRenderer[]",
+        "skiParts": "UnityEngine.MeshRenderer[]",
+        "handlebarParts": "UnityEngine.MeshRenderer[]",
+        "seatParts": "UnityEngine.MeshRenderer[]",
+        "tunnelParts": "UnityEngine.MeshRenderer[]",
+        "railParts": "UnityEngine.MeshRenderer[]",
+        "logoParts": "UnityEngine.MeshRenderer[]",
+        "metalParts": "UnityEngine.MeshRenderer[]",
+        "bumberParts": "UnityEngine.MeshRenderer[]",
+        "underParts": "UnityEngine.MeshRenderer[]",
+        "lightFrameParts": "UnityEngine.MeshRenderer[]",
+        "spindleCustomParts": "UnityEngine.MeshRenderer[]",
+        "railCustomParts": "UnityEngine.MeshRenderer[]",
+        "handlebarCustomParts": "UnityEngine.MeshRenderer[]",
+        "headLights": "UnityEngine.MeshRenderer[]",
+        "spindleCustomMaterial": "UnityEngine.Material",
+        "railCustomMaterial": "UnityEngine.Material",
+        "handlebarCustomMaterial": "UnityEngine.Material"
+      },
+      "methods": [
+        {
+          "name": "SetHandleBarAngle",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetThrottleLeverAngle",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetBrakeLeverAngle",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetHeadlightEmission",
+          "params": [
+            "System.Single"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetTraxObjects",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        },
+        {
+          "name": "SetSkis",
+          "params": [
+            "System.Boolean"
+          ],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "SuspensionController": {
+      "fields": {
+        "suspensionSubSteps": "System.Int32",
+        "interpolatedTerrainNormals": "System.Boolean",
+        "antiRollBarFactor": "System.Single",
+        "skiAutoTurn": "System.Boolean",
+        "frontSuspension": "Shock",
+        "rearSuspension": "Shock",
+        "uniformTrackFrictionVelocity": "System.Boolean",
+        "clampTrackSideFriction": "System.Boolean",
+        "trackRigidityFront": "System.Single",
+        "trackRigidityRear": "System.Single",
+        "tiltFrictionMode": "FCLEJPAFAPP",
+        "reduceSuspensionForceByTilt": "System.Boolean",
+        "reduceSkiGripForceByTilt": "System.Boolean",
+        "reduceTrackGripForceByTilt": "System.Boolean"
+      },
+      "methods": []
+    },
+    "TimeController": {
+      "fields": {
+        "TimeOfDay": "LBFEPEDFKGG<System.Single>"
+      },
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "TimeController"
+        },
+        {
+          "name": "GetTimeOfDay",
+          "params": [],
+          "return": "System.Single"
+        },
+        {
+          "name": "GetGameDateTime",
+          "params": [],
+          "return": "System.DateTime"
+        },
+        {
+          "name": "GetDateYMD",
+          "params": [],
+          "return": "UnityEngine.Vector3Int"
+        },
+        {
+          "name": "GetTimeHHMM",
+          "params": [],
+          "return": "UnityEngine.Vector2Int"
+        },
+        {
+          "name": "RefreshEnvironment",
+          "params": [],
+          "return": "System.Void"
+        }
+      ]
+    },
+    "VehicleScriptableObject": {
+      "fields": {
+        "displayName": "System.String",
+        "prefabName": "System.String",
+        "group": "System.String",
+        "category": "HKOKHMGAAMI",
+        "isLocked": "System.Boolean",
+        "isTurboOn": "System.Boolean",
+        "engineText": "System.String",
+        "skiStance": "System.Single",
+        "lengthName": "System.String",
+        "lenghtIndex": "System.Int32",
+        "lugHeight": "System.Single",
+        "coefficientOfFriction": "System.Single",
+        "weight": "System.Single",
+        "powerFactor": "System.Single",
+        "horsePower": "System.Single",
+        "maxRpm": "System.Single",
+        "fuelCapacity": "System.Single",
+        "fuelConsumption": "System.Single",
+        "skisXDistanceOffset": "System.Single",
+        "centerOfMassOffset": "UnityEngine.Vector3",
+        "driverCenterOfMassOffset": "UnityEngine.Vector3",
+        "engineAudioType": "AJIPMENAPIM",
+        "hasBarpads": "System.Boolean",
+        "hasHandleGuards": "System.Boolean",
+        "canChangeSkis": "System.Boolean",
+        "hasWindshield": "System.Boolean",
+        "hasSnowFlaps": "System.Boolean",
+        "hasHighHandleBar": "System.Boolean",
+        "hasDefaultHandleGuards": "System.Boolean",
+        "canChangeBumpers": "System.Boolean",
+        "hasRemovableRearParts": "System.Boolean",
+        "hasTunnelAccessories": "System.Boolean",
+        "canChangeSpindle": "System.Boolean",
+        "canChangeHandleBar": "System.Boolean"
+      },
+      "methods": []
+    },
+    "WeatherManager": {
+      "fields": {
+        "setupsInitial": "WeatherSetup[]",
+        "Forecast": "NCFELFGMEBC<WeatherForecast>"
+      },
+      "methods": [
+        {
+          "name": "get_Instance",
+          "params": [],
+          "return": "WeatherManager"
+        },
+        {
+          "name": "get_WeatherCurrentIndex",
+          "params": [],
+          "return": "System.Int32"
+        },
+        {
+          "name": "get_WeatherCurrent",
+          "params": [],
+          "return": "WeatherSetup"
+        },
+        {
+          "name": "GetWeatherFromName",
+          "params": [
+            "System.String"
+          ],
+          "return": "WeatherSetup"
+        },
+        {
+          "name": "FindWeatherIndex",
+          "params": [
+            "WeatherSetup"
+          ],
+          "return": "System.Byte"
+        },
+        {
+          "name": "CreateFixedForecast",
+          "params": [
+            "WeatherSetup"
+          ],
+          "return": "WeatherForecast"
+        }
+      ]
+    },
+    "WeatherSetup": {
+      "fields": {
+        "azureWeatherPresetName": "System.String",
+        "displayName": "System.String",
+        "chance": "System.Single",
+        "stayGameHoursMin": "System.Single",
+        "stayGameHoursMax": "System.Single",
+        "wwiseWeatherSwitchState": "System.String"
+      },
+      "methods": []
+    }
+  }
+}

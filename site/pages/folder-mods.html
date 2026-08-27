@@ -14,7 +14,7 @@
     id = "author.my-mod",
     name = "My Mod",
     version = "1.0.0",
-    api = "3.1"
+    api = "3.2"
 }</code></pre>
 
-      <p>Normal APIs need no permission list. Add <code>permissions = { "dev" }</code> only for scripts that use the developer reflection API.</p>
+      <p>Normal APIs need no permission list. Developer reflection requires both <code>permissions = { "dev" }</code> and owner-side <code>EnableDevApi=true</code>; normal framework APIs require neither.</p>

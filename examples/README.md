@@ -1,13 +1,35 @@
 # Examples
 
-These scripts are meant to be copied into `Sledders/LuaMods` and edited.
+Copy these scripts into `Sledders/LuaMods` and edit them. They are intentionally small rather than being complete production mods.
 
-Start with:
+## Start here
 
-- `HeadlightToggle.lua` — simple input and sled state
-- `ForwardBoost.lua` — local-space velocity
-- `SimpleHUD.lua` — `onDraw()` and screen drawing
-- `TopSpeedTracker.lua` — `onTick()` and storage
-- `FolderMod/` — multi-file mod layout and `require()`
+- `FrameworkBasics.lua` — local sled, input, headlights, fuel and velocity.
+- `HeadlightToggle.lua` — smallest useful state toggle.
+- `ForwardBoost.lua` — sled-local motion.
+- `SimpleHUD.lua` — `onDraw()` and immediate-mode drawing.
+- `TopSpeedTracker.lua` — ticking + persistent storage.
+- `FolderMod/` — multi-file layout, manifest and `require()`.
 
-The rest cover individual API areas such as fuel, camera FOV, engine state, and stored positions.
+## Framework examples
+
+- `HorsepowerTune.lua` — writable vehicle-definition horsepower.
+- `NativeHud.lua` — native HUD element visibility/meter control.
+- `MaterialColor.lua` — named sled renderer groups and material colors.
+- `CameraProjection.lua` — world-to-GUI projection.
+- `AudioInspector.lua` — enumerate currently playing Unity `AudioSource`s.
+- `WorldControl.lua` — snow/time/weather reads and writes.
+- `PhysicsRaycast.lua` — collision/world queries.
+- `NativeInput.lua` — enumerate the game's Unity Input System actions.
+
+## Existing focused examples
+
+- `CameraFov.lua`
+- `EngineToggle.lua`
+- `ForcedHeadlights.lua`
+- `FuelWarning.lua`
+- `Refuel.lua`
+- `SpeedLogger.lua`
+- `StoragePosition.lua`
+
+For the complete surface and exact units, see `docs/API.api`.

@@ -15,6 +15,12 @@ namespace SleddersLuaRuntime.Api
             var api = new Table(mod.Script);
             api.Set("version", DynValue.NewString(RuntimeHost.ApiVersion));
             api.Set("runtimeVersion", DynValue.NewString(RuntimeHost.RuntimeVersion));
+            api.Set("has", DynValue.NewCallback((ctx, args) =>
+            {
+                int offset = MethodOffset(args, api);
+                string name = RequireString(args, offset, "api.has(capability)");
+                return DynValue.NewBoolean(HasCapability(mod, name));
+            }));
             root.Set("api", DynValue.NewTable(api));
 
             var modInfo = new Table(mod.Script);
@@ -34,6 +40,12 @@ namespace SleddersLuaRuntime.Api
             root.Set("window", DynValue.NewTable(WindowApi.Build(mod)));
             root.Set("screen", DynValue.NewTable(ScreenApi.Build(mod)));
             root.Set("audio", DynValue.NewTable(AudioApi.Build(mod)));
+            root.Set("hud", DynValue.NewTable(HudApi.Build(mod)));
+            root.Set("world", DynValue.NewTable(WorldApi.Build(mod)));
+            root.Set("visual", DynValue.NewTable(VisualApi.BuildService(mod)));
+            root.Set("scene", DynValue.NewTable(SceneApi.Build(mod)));
+            root.Set("physics", DynValue.NewTable(PhysicsWorldApi.Build(mod)));
+            root.Set("assets", DynValue.NewTable(AssetApi.Build(mod)));
 
             root.Set("storage", DynValue.NewTable(BuildStorage(mod)));
             root.Set("dev", DynValue.NewTable(BuildDev(mod)));
@@ -111,6 +123,7 @@ namespace SleddersLuaRuntime.Api
                 return DynValue.NewBoolean(mod.RemoveKeyBinding(RequireInt(args, offset, "input.off(handle)")));
             }));
 
+            NativeInputApi.Enhance(mod, table);
             return table;
         }
 
@@ -129,11 +142,13 @@ namespace SleddersLuaRuntime.Api
             table.Set("getFixedDelta", DynValue.NewCallback((ctx, args) => DynValue.NewNumber(UnityBridge.FixedDeltaTime)));
             table.Set("getDeltaMs", DynValue.NewCallback((ctx, args) => DynValue.NewNumber(UnityBridge.DeltaTime * 1000.0)));
             table.Set("getFixedDeltaMs", DynValue.NewCallback((ctx, args) => DynValue.NewNumber(UnityBridge.FixedDeltaTime * 1000.0)));
-            table.Set("getFPS", DynValue.NewCallback((ctx, args) =>
+            DynValue getFps = DynValue.NewCallback((ctx, args) =>
             {
                 double dt = UnityBridge.DeltaTime;
                 return dt > 0.0000001 ? DynValue.NewNumber(1.0 / dt) : DynValue.Nil;
-            }));
+            });
+            table.Set("getFps", getFps);
+            table.Set("getFPS", getFps);
             table.Set("getUptime", DynValue.NewCallback((ctx, args) => DynValue.NewNumber(mod.Host.UptimeSeconds)));
             return table;
         }
@@ -206,6 +221,48 @@ namespace SleddersLuaRuntime.Api
             return table;
         }
 
+        private static bool HasCapability(LuaModInstance mod, string name)
+        {
+            switch ((name ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "sled":
+                case "sled.physics":
+                case "sled.vehicle":
+                case "sled.tuning":
+                case "sled.visuals":
+                case "player":
+                case "camera":
+                case "camera.projection":
+                case "camera.free":
+                case "camera.photo":
+                case "hud":
+                case "audio":
+                case "audio.sources":
+                case "audio.wav":
+                case "audio.native_sfx":
+                case "audio.presets":
+                case "visual.materials":
+                case "scene":
+                case "scene.objects":
+                case "physics":
+                case "physics.queries":
+                case "assets":
+                case "assets.bundles":
+                case "input.native":
+                case "world":
+                case "world.snow":
+                case "world.weather":
+                case "world.time":
+                case "world.fuel":
+                case "storage":
+                    return true;
+                case "dev":
+                    return mod.Host.Config.EnableDevApi && mod.Manifest.HasPermission("dev");
+                default:
+                    return false;
+            }
+        }
+
         private static string RequireString(CallbackArguments args, int index, string usage)
         {
             if (args.Count <= index || args[index].Type != DataType.String || string.IsNullOrWhiteSpace(args[index].String))
@@ -215,8 +272,12 @@ namespace SleddersLuaRuntime.Api
 
         private static int RequireInt(CallbackArguments args, int index, string usage)
         {
-            if (args.Count <= index || args[index].Type != DataType.Number) throw new ScriptRuntimeException(usage + " expects a number.");
-            return (int)args[index].Number;
+            if (args.Count <= index || args[index].Type != DataType.Number)
+                throw new ScriptRuntimeException(usage + " expects an integer.");
+            double raw = args[index].Number;
+            if (double.IsNaN(raw) || double.IsInfinity(raw) || raw < int.MinValue || raw > int.MaxValue || Math.Abs(raw - Math.Round(raw)) > 0.0000001)
+                throw new ScriptRuntimeException(usage + " expects a finite integer.");
+            return (int)raw;
         }
 
         private static int MethodOffset(CallbackArguments args, Table table)
@@ -233,7 +294,10 @@ namespace SleddersLuaRuntime.Api
 
         private static double NumberOr(CallbackArguments args, int index, double fallback)
         {
-            return args.Count > index && args[index].Type == DataType.Number ? args[index].Number : fallback;
+            if (args.Count <= index || args[index].IsNil()) return fallback;
+            if (args[index].Type != DataType.Number || double.IsNaN(args[index].Number) || double.IsInfinity(args[index].Number))
+                throw new ScriptRuntimeException("Expected a finite number.");
+            return args[index].Number;
         }
 
     }

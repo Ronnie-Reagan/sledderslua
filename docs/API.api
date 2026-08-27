@@ -1,4 +1,13 @@
-SLEDDERS LUA API 3.1
+SLEDDERS LUA API 3.2
+Runtime 0.5.0-dev
+
+DESIGN NOTES
+  Stable APIs expose Sledders/game concepts and safe Unity-backed wrappers.
+  Most writable state has matching get/set access. Derived telemetry stays read-only.
+  Stable object wrappers are handle-based and become invalid after their scene/object lifetime ends.
+  Angles are degrees. Positions/distances are metres. Velocity is m/s. Force is newtons.
+  Fuel is litres. Rigidbody mass/vehicle definition weight are kilograms but are separate concepts.
+  Numeric setters reject NaN and infinity.
 
 CALLBACKS
   onLoad()
@@ -15,138 +24,19 @@ CALLBACKS
   onSceneInitialized(index, name)
   onSceneUnloaded(index, name)
 
-PLAYER  sledders.player
-  getSled() -> Sled|nil
-  hasSled() -> bool
-  getPos() -> Vector3|nil
-  getRot() -> Vector3|nil
-  getSpeed() -> Number|nil
-
-
-SLED
-  getName() -> String
-  isValid() -> bool
-  getPos() -> Vector3|nil
-  getRot() -> Vector3|nil
-  getVel() -> Vector3|nil
-  getWorldVel() -> Vector3|nil
-  getForwardSpeed() -> Number|nil
-  getSpeed() -> Number|nil
-  getMass() -> Number|nil
-  getRPM() -> Number|nil
-  getThrottle() -> Number|nil
-  isEngineOn() -> bool|nil
-  getFuel() -> Number|nil
-  getFuelCapacity() -> Number|nil
-  getFuelPercent() -> Number|nil
-  isFuelEmpty() -> bool|nil
-  getHeadlights() -> bool|nil
-  areHeadlightsForced() -> bool
-
-  setPos(Vector3) -> bool
-  setPos(x, y, z) -> bool
-  setVel(Vector3) -> bool
-  setVel(right, up, forward) -> bool
-  setWorldVel(Vector3) -> bool
-  setWorldVel(x, y, z) -> bool
-  setMass(kg) -> bool
-  setFuel(litres) -> bool
-  setEngineOn(enabled) -> bool
-  setHeadlights(enabled) -> bool
-
-  teleport(Vector3) -> bool
-  teleport(x, y, z) -> bool
-  addVel(Vector3) -> bool
-  addVel(right, up, forward) -> bool
-  addWorldVel(Vector3) -> bool
-  addWorldVel(x, y, z) -> bool
-  addForce(Vector3) -> bool
-  addForce(right, up, forward) -> bool
-  addWorldForce(Vector3) -> bool
-  addWorldForce(x, y, z) -> bool
-  addFuel(litres) -> bool
-  fillFuel() -> bool
-  startEngine() -> bool
-  stopEngine() -> bool
-  toggleHeadlights() -> bool
-  forceHeadlights(enabled) -> bool
-  releaseHeadlights() -> bool
-
-SLEDS  sledders.sled
-  getAll(max?) -> Array<Sled>
-
-CAMERA  sledders.camera
-  getFov() -> Number|nil
-  getPos() -> Vector3|nil
-  getRot() -> Vector3|nil
-
-  setFov(degrees) -> bool
-
-INPUT  sledders.input
-  wasPressed(key) -> bool
-  isDown(key) -> bool
-  getAxis(name) -> Number
-
-  onPressed(key, callback) -> Number
-  off(handle) -> bool
-
-SCREEN  sledders.screen
-  getWidth() -> Number
-  getHeight() -> Number
-  isAvailable() -> bool
-
-  setColor(r, g, b, a?) -> bool
-  setColor(color) -> bool
-  resetColor() -> bool
-
-  rectangle(x, y, w, h) -> bool
-  box(x, y, w, h, text?) -> bool
-  line(x1, y1, x2, y2, thickness?) -> bool
-  circle(x, y, radius, segments?, thickness?) -> bool
-  triangle(x1, y1, x2, y2, x3, y3, thickness?) -> bool
-  poly(points, thickness?) -> bool
-  print(text, x, y, w?, h?) -> bool
-
-WINDOW  sledders.window
-  getWidth() -> Number
-  getHeight() -> Number
-  getResolution() -> Table
-  isFocused() -> bool|nil
-
-TIME  sledders.time
-  getDelta() -> Number
-  getFixedDelta() -> Number
-  getDeltaMs() -> Number
-  getFixedDeltaMs() -> Number
-  getFPS() -> Number
-  getUptime() -> Number
-
-GAME  sledders.game
-  getVersion() -> String
-  getScene() -> String
-
-AUDIO  sledders.audio
-  getVolume() -> Number|nil
-  setVolume(volume) -> bool
-
-STORAGE  sledders.storage
-  get(key, default?) -> Any
-  set(key, value) -> bool
-  delete(key) -> bool
-  save() -> bool
-
-LOG  sledders.log
-  info(...) -> nil
-  warn(...) -> nil
-  error(...) -> nil
-
-VALUES
-  sledders.vector3(x, y, z) -> Vector3
-  sledders.color(r, g, b, a?) -> Table
-
 API  sledders.api
   version : String
   runtimeVersion : String
+  has(capability) -> bool
+
+  Common capabilities:
+    sled, sled.physics, sled.vehicle, sled.tuning, sled.visuals
+    player, camera, camera.projection, camera.free, camera.photo
+    hud, audio, audio.sources, audio.wav, audio.native_sfx, audio.presets
+    visual.materials, scene, scene.objects, physics, physics.queries
+    assets, assets.bundles, input.native
+    world, world.snow, world.weather, world.time, world.fuel
+    storage, dev
 
 MOD  sledders.mod
   id : String
@@ -154,28 +44,569 @@ MOD  sledders.mod
   version : String
   author : String
 
+PLAYER  sledders.player
+  getSled() -> Sled|nil
+  hasSled() -> bool
+  getPos() -> Vector3|nil
+  setPos(Vector3 | x,y,z) -> bool
+  getRot() -> Vector3|nil                 Euler degrees
+  setRot(Vector3 | x,y,z) -> bool
+  getTransform() -> Transform|nil
+  getRenderers(max?) -> Array<Renderer>
+  getState() -> PropertyBag|nil
+
+  player state keys currently include:
+    bodyOffset, drivingStance, switchbackStance, isPerformingAction,
+    handRotationWeight, shoulderDefaultWeight, shoulderTargetWeight,
+    shoulderMaxWeight, shoulderWeightFactor, shoulderSmoothSpeed
+
+SLED  returned by sledders.player.getSled() / sledders.sled.getAll()
+  isValid() -> bool
+  getName() -> String|nil
+
+  getPos() -> Vector3|nil
+  setPos(Vector3 | x,y,z) -> bool          direct move; does not use respawn path
+  teleport(Vector3 | x,y,z, preserveVelocity?) -> bool
+  getRot() -> Vector3|nil
+  setRot(Vector3 | x,y,z) -> bool
+
+  getVel() -> Vector3|nil                 sled-local velocity
+  setVel(Vector3 | right,up,forward) -> bool
+  getWorldVel() -> Vector3|nil
+  setWorldVel(Vector3 | x,y,z) -> bool
+  getAngularVel() -> Vector3|nil
+  setAngularVel(Vector3 | x,y,z) -> bool
+  getForwardSpeed() -> Number|nil
+  getSpeed() -> Number|nil
+
+  getMass() -> Number|nil                 live main Rigidbody mass
+  setMass(kg) -> bool
+  getBody() -> Rigidbody|nil
+  getVehicle() -> Vehicle|nil
+  getTuning() -> SledTuning
+  getStructure() -> SledStructure|nil
+  getRenderers(group?) -> Array<Renderer>
+
+  addForce(Vector3 | right,up,forward) -> bool
+  addWorldForce(Vector3 | x,y,z) -> bool
+  addTorque(Vector3 | localX,localY,localZ) -> bool
+  addWorldTorque(Vector3 | x,y,z) -> bool
+
+  getHeadlights() -> bool|nil
+  setHeadlights(enabled) -> bool
+  toggleHeadlights() -> bool
+  forceHeadlights(enabled) -> bool         owner-scoped persistent override
+  areHeadlightsForced() -> bool
+  releaseHeadlights() -> bool
+
+  getRpm() -> Number|nil
+  getRPM() -> Number|nil                  compatibility alias
+  getDisplayRpm() -> Number|nil
+  getTrackSpeed() -> Number|nil
+  getThrottle() -> Number|nil
+
+  isEngineOn() -> bool|nil
+  setEngineOn(enabled) -> bool
+  startEngine() -> bool
+  stopEngine() -> bool
+
+  getFuel() -> Number|nil                 litres
+  getFuelCapacity() -> Number|nil         litres
+  getFuelPercent() -> Number|nil          0..1
+  setFuel(litres) -> bool
+  addFuel(litres) -> bool
+  fillFuel() -> bool
+  isFuelEmpty() -> bool|nil
+
+  getParking()/setParking(enabled) -> bool|nil / bool
+  getFrozen()/setFrozen(enabled) -> bool|nil / bool
+  getVisible()/setVisible(enabled) -> bool|nil / bool
+  isDead() -> bool|nil
+  isInAir() -> bool|nil
+  isWheelie() -> bool|nil
+  getClientId() -> String|nil             string preserves full 64-bit value
+
+SLEDS  sledders.sled
+  getAll(max?) -> Array<Sled>
+
+RIGIDBODY  sled:getBody()
+  PropertyBag methods plus convenience methods.
+  keys() -> Array<String>
+  isWritable(key) -> bool|nil
+  get(key) -> Any
+  set(key, value) -> bool
+
+  writable keys:
+    mass, position, rotation, velocity, angularVelocity, centerOfMass,
+    linearDamping, angularDamping, useGravity, isKinematic,
+    maxAngularVelocity, sleepThreshold, solverIterations,
+    solverVelocityIterations, collisionDetectionMode, interpolation
+
+  getMass()/setMass(value)
+  getVelocity()/setVelocity(Vector3)
+  getAngularVelocity()/setAngularVelocity(Vector3)
+  getCenterOfMass()/setCenterOfMass(Vector3)
+  getLinearDamping()/setLinearDamping(value)
+  getAngularDamping()/setAngularDamping(value)
+  getUseGravity()/setUseGravity(bool)
+  getKinematic()/setKinematic(bool)
+  getPos()/setPos(Vector3)
+  getRot()/setRot(Vector3)
+  addForce(Vector3) -> bool
+  addTorque(Vector3) -> bool
+  wake() -> bool
+  sleep() -> bool
+  resetMotion() -> bool
+
+VEHICLE  sled:getVehicle()
+  Semantic PropertyBag around VehicleScriptableObject.
+  keys(), isWritable(key), get(key), set(key,value)
+
+  convenience getter/setter pairs:
+    Name, Description, Weight, Horsepower, MaxRpm, FuelCapacity,
+    FuelConsumption, Friction, LugHeight, SkiStance, PowerFactor,
+    Turbo, CenterOfMassOffset, DriverCenterOfMassOffset, EngineAudioType
+
+  additional writable keys:
+    prefabName, group, category, locked, engineText, lengthName,
+    lengthIndex, skiDistanceOffset, hasBarpads, hasHandleGuards,
+    hasWindshield, hasSnowFlaps, hasHighHandlebar,
+    hasDefaultHandleGuards, hasRemovableRearParts, hasTunnelAccessories,
+    canChangeSkis, canChangeBumpers, canChangeSpindle, canChangeHandlebar
+
+  Note: vehicle.weight is the vehicle-definition value. body.mass is live physics mass.
+
+SLED TUNING  sled:getTuning()
+  getController() -> PropertyBag
+  getBase() -> PropertyBag|nil
+  getSuspension() -> PropertyBag|nil
+  getShock("front"|"rear") -> Shock|nil
+
+  controller keys:
+    throttleExponent, driverTorqueRoll, driverTorquePitch, sledTorque,
+    fuelConsumptionEnabled, fuelUsageMultiplier, rpmSensitivity,
+    rpmSensitivityDown, rpmSoundVariation, minThrottleOnClutchEngagement,
+    clutchRpmMin, clutchRpmMax, wheelieThreshold, drowningDepth, drowningTime
+
+  base keys:
+    skisMaxAngle, verticalWeightTransfer, horizontalWeightTransferMode,
+    toeAngle, driverLowStanceTargetY, switchbackJump, hopOverPreJump,
+    switchBackLeanDistance, trailLeanDistance, switchbackTransitionTime
+
+  suspension keys:
+    subSteps, interpolatedTerrainNormals, debugGraph, antiRollBarFactor,
+    skiAutoTurn, uniformTrackFrictionVelocity, clampTrackSideFriction,
+    trackRigidityFront, trackRigidityRear, tiltFrictionMode,
+    reduceSuspensionForceByTilt, reduceSkiGripForceByTilt,
+    reduceTrackGripForceByTilt
+
+SHOCK
+  PropertyBag keys: mass, maxCompression, compression, velocity, averageVelocity
+  getSoft() -> PropertyBag|nil
+  getHard() -> PropertyBag|nil
+  reset() -> bool
+
+SHOCK SETTINGS
+  keys: springFactor, damperFactor, fastCompressionVelocityThreshold,
+        fastReboundVelocityThreshold, compressionRatio,
+        compressionFastRatio, reboundRatio, reboundFastRatio
+
+SLED STRUCTURE  sled:getStructure()
+  isValid() -> bool
+  groups() -> Array<String>
+  getRenderers(group?) -> Array<Renderer>
+  getTransform(name) -> Transform|nil
+  getCustomMaterial("spindle"|"rail"|"handlebar") -> Material|nil
+  setHandlebarAngle(value) -> bool
+  setThrottleLeverAngle(value) -> bool
+  setBrakeLeverAngle(value) -> bool
+  setHeadlightEmission(value) -> bool
+  setSkisVisible(enabled) -> bool
+  setTrackVisible(enabled) -> bool
+
+  transform names include leftSki, rightSki, throttleLever, brakeLever,
+  track, leftHandTarget, rightHandTarget, leftShoulderTarget, rightShoulderTarget.
+
+VISUAL  sledders.visual
+  renderers(target?, max?) -> Array<Renderer>    default target = local sled
+  material(renderer, index?) -> Material|nil
+
+RENDERER
+  isValid() -> bool
+  getName() -> String
+  getEnabled()/setEnabled(enabled)
+  getMaterials() -> Array<Material>
+  getMaterial(index?) -> Material|nil             index is 1-based
+  setColor(color, property?) -> bool              applies to renderer materials
+
+MATERIAL
+  isValid() -> bool
+  getName() -> String
+  getShader() -> String|nil
+  has(property) -> bool
+  getColor(property?) -> Color|nil
+  setColor(color, property?) -> bool
+  getFloat(property) -> Number|nil
+  setFloat(property, value) -> bool
+  enableKeyword(keyword) -> bool
+  disableKeyword(keyword) -> bool
+
+TRANSFORM
+  isValid() -> bool
+  getName() -> String
+  getPos()/setPos(Vector3)
+  getLocalPos()/setLocalPos(Vector3)
+  getRot()/setRot(Vector3)
+  getLocalRot()/setLocalRot(Vector3)
+  getScale()/setScale(Vector3)
+  getForward()/getUp()/getRight() -> Vector3|nil
+  getChildCount() -> Number|nil
+  getChild(index) -> Transform|nil                1-based index
+  transformPoint(Vector3) -> Vector3|nil
+  inverseTransformPoint(Vector3) -> Vector3|nil
+  transformDirection(Vector3) -> Vector3|nil
+  inverseTransformDirection(Vector3) -> Vector3|nil
+
+CAMERA  sledders.camera
+  getFov()/setFov(degrees)                       1..179
+  getPos()/setPos(Vector3)
+  getRot()/setRot(Vector3)
+  getTransform() -> Transform|nil
+
+  worldToScreen(Vector3) -> Vector3|nil          Unity screen origin = bottom-left
+  worldToGui(Vector3) -> Vector3|nil             GUI origin = top-left
+  screenToWorld(Vector3) -> Vector3|nil
+  guiToWorld(Vector3) -> Vector3|nil
+  screenPointToRay(Vector3) -> {origin, direction}|nil
+
+  getModes() -> Array<String>
+  getMode() -> String|nil
+  setMode(mode) -> bool
+  nextMode() -> String|nil
+  saveMode() -> bool
+  getDroneDistance() -> Number|nil
+  setDroneDistance(value) -> bool
+  setDroneHeightOffset(value) -> bool
+  resetDroneHeightOffset() -> bool
+
+CAMERA FREE  sledders.camera.free
+  modes() -> Array<String>                       PhotoMode, DroneMode
+  getMode() -> String|nil
+  isActive() -> bool|nil
+  isModeActive(mode) -> bool|nil
+  activate(mode?, position?) -> bool
+  deactivate(mode?) -> bool
+  forceExit() -> bool
+  getTrackedPosition() -> Vector3|nil
+  getMovementEnabled()/setMovementEnabled(bool)
+  getMovementSpeed()/setMovementSpeed(value)
+  getMaxDistance()/setMaxDistance(value)
+  getMovementMode()/setMovementMode(mode)
+  setTreeCollisionEnabled(enabled) -> bool
+
+CAMERA PHOTO  sledders.camera.photo
+  getEnabled()/setEnabled(enabled)
+  getFov()/setFov(value)
+  getRoll()/setRoll(value)
+  keys() -> Array<String>
+  getRange(name) -> {min,max}|nil
+  hasSavedSettings() -> bool|nil
+  disableAllFilters() -> bool
+
+  current writable photo keys include:
+    fieldOfView, viewRoll, exposure, focusDistance, timeOfDay, aperture,
+    saturation, storm, contrast, fog, temperature, snow,
+    bloomIntensity, focalLength, bloomThreshold, vignette,
+    depthOfFieldEnabled
+
+HUD  sledders.hud
+  isVisible() -> bool|nil
+  setVisible(visible) -> bool                    owner-scoped hide/release
+  forceShow() -> bool
+  elements() -> Array<String>
+  get(element) -> HudElement|nil
+  getVisible(element) -> bool|nil
+  setElementVisible(element, visible) -> bool
+  showLetterbox(enabled) -> bool
+  showBanner(title, message) -> bool
+
+  named elements currently include:
+    document, race, speedMeter, rpmMeter, meterRoot, compass, shovel,
+    stance, stanceHigh, stanceLow, switchbackLeft, switchbackRight,
+    corneringLeft, corneringRight, engine, fuelRescue, spawnPopup,
+    challengeNotify, joinChallenge, holdInput
+
+HUD ELEMENT
+  isValid() -> bool
+  getVisible()/setVisible(visible)
+  setValue(value) -> bool                        supported by native meters
+  setUnit(unit) -> bool
+  setReverseText(reverse, flash?) -> bool
+  setText(text) -> bool
+
+INPUT  sledders.input
+  wasPressed(key) -> bool
+  isDown(key) -> bool
+  getAxis(name) -> Number
+  onPressed(key, callback) -> Number
+  off(handle) -> bool
+
+INPUT NATIVE  sledders.input.native
+  actions(max?) -> Array<InputAction>
+  action(name) -> InputAction|nil
+  getCurrentController() -> String|nil
+  setSystemEnabled(enabled) -> bool
+  setUiEnabled(enabled) -> bool
+
+INPUT ACTION
+  isValid() -> bool
+  getName() -> String
+  getEnabled() -> bool|nil
+  getPhase() -> String|nil
+  getExpectedControlType() -> String|nil
+  getInteractions() -> String|nil
+  getProcessors() -> String|nil
+  getValue() -> Any
+  getActiveControl() -> String|nil
+  isPressed()/wasPressed()/wasReleased() -> bool|nil
+  enable()/disable() -> bool
+
+WORLD SNOW  sledders.world.snow
+  conditions() -> Array<String>
+  getCondition()/setCondition(condition)
+  getHardness()/setHardness(value)
+
+WORLD TIME  sledders.world.time
+  getTimeOfDay() -> Number|nil
+  setTimeOfDay(value) -> bool
+  getDateTime() -> String|nil
+  getDate() -> String|nil
+  getClock() -> String|nil
+  refresh() -> bool
+
+WORLD WEATHER  sledders.world.weather
+  getName() -> String|nil
+  getIndex() -> Number|nil
+  names() -> Array<String>
+  get(name) -> WeatherSetup|nil
+  current() -> WeatherSetup|nil
+  set(name) -> bool
+  findIndex(name) -> Number|nil
+
+WEATHER SETUP
+  keys(), get(key), set(key,value), isWritable(key)
+  getName() -> String|nil                       read-only
+  getChance()/setChance(value)
+  getStayHoursMin()/setStayHoursMin(value)
+  getStayHoursMax()/setStayHoursMax(value)
+  additional keys: azurePreset [read-only], wwiseSwitch [writable]
+
+WORLD FUEL  sledders.world.fuel
+  getUsageEnabled()/setUsageEnabled(enabled)
+  canRescue() -> bool|nil
+  rescue() -> bool
+  hasStation() -> bool|nil
+  getNearestStation(Vector3) -> FuelStation|nil
+
+FUEL STATION
+  isValid() -> bool
+  getPos() -> Vector3|nil
+  getRefuelEnabled()/setRefuelEnabled(enabled)
+
+PHYSICS  sledders.physics
+  getGravity() -> Vector3|nil
+  setGravity(Vector3) -> bool
+  raycast(origin, direction, distance?, layerMask?) -> Hit|nil
+  overlapSphere(center, radius, layerMask?, max?) -> Array<SceneObject>
+  ignoreCollision(colliderA, colliderB, ignore?) -> bool
+
+RAYCAST HIT
+  distance : Number
+  point : Vector3|nil
+  normal : Vector3|nil
+  collider : SceneObject|nil
+  body : Rigidbody|nil
+
+SCENE  sledders.scene
+  find(typeName, max?) -> Array<SceneObject>
+  findNamed(typeName, name, max?) -> Array<SceneObject>
+  getLocalSled() -> Sled|nil
+  getLocalPlayer() -> SceneObject|nil
+
+SCENE OBJECT
+  isValid() -> bool
+  getName() -> String
+  getType() -> String
+  getActive()/setActive(active)
+  getTransform() -> Transform|nil
+  getPos()/setPos(Vector3)
+  getRot()/setRot(Vector3)
+  getRenderers(max?) -> Array<Renderer>
+  getAudioSources(max?) -> Array<AudioSource>
+  getComponents(typeName, max?) -> Array<SceneObject>
+
+AUDIO  sledders.audio
+  getVolume()/setVolume(value)                  global AudioListener 0..1
+  getSources(max?) -> Array<AudioSource>
+  getPlayingSources(max?) -> Array<AudioSource>
+  getSledSources(max?) -> Array<AudioSource>
+  loadWav(relativePath) -> AudioClip|nil
+  createSource(options?) -> AudioSource|nil
+  play(AudioClip, options?) -> AudioSource|nil
+  nativeSfx : NativeSfx
+  engine : EngineAudio
+  presets : AudioPresets
+
+  WAV loader is sandboxed to the mod directory and supports PCM 8/16/24/32-bit
+  and IEEE float 32-bit WAV files up to 64 MiB.
+
+AUDIO SOURCE
+  isValid() -> bool
+  getName() -> String
+  getVolume()/setVolume(0..1)
+  getPitch()/setPitch(-3..3)
+  getTime()/setTime(seconds)
+  getSpatialBlend()/setSpatialBlend(0..1)
+  getLoop()/setLoop(bool)
+  getMute()/setMute(bool)
+  isPlaying() -> bool|nil
+  getClip()/setClip(AudioClip)
+  getPos()/setPos(Vector3)
+  play()/pause()/unPause()/stop() -> bool
+
+AUDIO CLIP
+  getName() -> String
+  getLength() -> Number|nil
+  getChannels() -> Number|nil
+  getFrequency() -> Number|nil
+  getSamples() -> Number|nil
+  getData(offset?, count?) -> Array<Number>|nil  max 65536 floats/read
+
+NATIVE SFX  sledders.audio.nativeSfx
+  names() -> Array<String>
+  play(name) -> bool
+  names include buttonClick, buttonHighlight, itemClick, tuningClick, error,
+  sledSelect, skiSelect, wrapSelect, driverSelect, enterPhotoMode,
+  exitPhotoMode, shutter
+
+ENGINE AUDIO  sledders.audio.engine
+  types() -> Array<String>
+  getRtpc() -> Number|nil
+  getType()/getTypeValue() -> String|Number|nil
+  setType(type) -> bool
+  start()/stop() -> bool
+
+AUDIO PRESETS  sledders.audio.presets
+  names() -> Array<String>
+  all() -> Array<AudioPreset>
+  current() -> AudioPreset|nil
+  get(name) -> AudioPreset|nil
+  apply(name) -> bool
+  reset() -> bool
+  saveCurrent(name, description?) -> bool
+
+AUDIO PRESET
+  keys(), get(key), set(key,value), isWritable(key)
+  get/set pairs for Name, Type, MasterVolume, EngineVolume, AmbientVolume,
+  SfxVolume, MusicVolume, EnhanceBass, EnhanceTreble, SpatialAudio, DynamicRange
+  apply() -> bool
+
+ASSETS  sledders.assets
+  loadBundle(relativePath) -> AssetBundle|nil    sandboxed to mod directory
+  findLoaded(typeName, max?) -> Array<Asset>
+  instantiate(asset, position?, rotation?) -> SceneObject|nil
+
+ASSET BUNDLE
+  isValid() -> bool
+  getName() -> String
+  getAssetNames() -> Array<String>
+  load(name) -> Asset|nil
+  unload(unloadLoadedObjects?) -> bool
+
+ASSET
+  isValid() -> bool
+  getName() -> String
+  getType() -> String
+  instantiate(position?, rotation?) -> SceneObject|nil
+  getRenderers(max?) -> Array<Renderer>
+
+SCREEN  sledders.screen
+  getWidth()/getHeight() -> Number
+  isAvailable() -> bool
+  setColor(r,g,b,a?) -> bool
+  setColor(color) -> bool
+  resetColor() -> bool
+  rectangle(x,y,w,h) -> bool
+  box(x,y,w,h,text?) -> bool
+  line(x1,y1,x2,y2,thickness?) -> bool
+  circle(x,y,radius,segments?,thickness?) -> bool
+  triangle(x1,y1,x2,y2,x3,y3,thickness?) -> bool
+  poly(points,thickness?) -> bool
+  print(text,x,y,w?,h?) -> bool
+
+WINDOW  sledders.window
+  getWidth()/getHeight() -> Number
+  getResolution() -> {width,height,aspect}
+  isFocused() -> bool|nil
+
+TIME  sledders.time
+  getDelta()/getFixedDelta() -> Number
+  getDeltaMs()/getFixedDeltaMs() -> Number
+  getFps() -> Number|nil
+  getFPS() -> Number|nil                    compatibility alias
+  getUptime() -> Number
+
+GAME  sledders.game
+  getVersion() -> String
+  getScene() -> String
+
+STORAGE  sledders.storage
+  get(key, default?) -> Any
+  set(key, value) -> bool
+  delete(key) -> bool
+  save() -> bool
+
+  Storage supports nil, strings, finite numbers, booleans, vectors/colors and
+  plain tables. Arrays must be contiguous 1-based integer arrays; object tables
+  use string keys. Cycles and oversized/pathological tables are rejected.
+
+LOG  sledders.log
+  info(...)
+  warn(...)
+  error(...)
+
+VALUES
+  sledders.vector3(x,y,z) -> Vector3
+  sledders.color(r,g,b,a?) -> Color
+  Colors accept normalized 0..1 or byte-like >1 values and are normalized.
+
+PROPERTY BAG
+  isValid() -> bool
+  keys() -> Array<String>
+  isWritable(key) -> bool|nil
+  get(key) -> Any
+  set(key,value) -> bool
+
 DEV  sledders.dev
+  Requires both manifest permission "dev" and runtime config EnableDevApi=true.
   type(nameOrQuery) -> Type|nil
-  types(query, max?) -> Array<Type>
-  objects(query, max?) -> Array<Object>
+  types(query,max?) -> Array<Type>
+  objects(query,max?) -> Array<Object>
 
 TYPE
-  name : String
-  fullName : String
-  assembly : String
-
-  members(filter?, max?) -> Array
+  name, fullName, assembly
+  members(filter?,max?) -> Array<String>
   get(member) -> Any
-  set(member, value) -> bool
-  call(method, ...) -> Any
+  set(member,value) -> bool
+  call(method,...) -> Any
 
 OBJECT
+  isValid() -> bool
   typeName() -> String
   name() -> String|nil
-
-  members(filter?) -> Array
+  members(filter?) -> Array<String>
   get(member) -> Any
-  set(member, value) -> bool
-  call(method, ...) -> Any
-  components(query?) -> Array
+  set(member,value) -> bool
+  call(method,...) -> Any
+  components(query?) -> Array<Object>
   dump(filter?) -> String

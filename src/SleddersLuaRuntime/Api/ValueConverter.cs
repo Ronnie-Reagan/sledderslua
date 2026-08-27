@@ -65,11 +65,17 @@ namespace SleddersLuaRuntime.Api
                 DynValue handle = value.Table.Get("__handle");
                 if (handle.Type == DataType.Number)
                 {
-                    object? resolved = mod.Handles.Get((int)handle.Number);
-                    if (resolved == null)
-                        return null;
-                    if (effectiveType.IsInstanceOfType(resolved) || effectiveType == typeof(object))
-                        return resolved;
+                    double rawHandle = handle.Number;
+                    if (!double.IsNaN(rawHandle) && !double.IsInfinity(rawHandle) &&
+                        rawHandle >= 1.0 && rawHandle <= int.MaxValue &&
+                        Math.Abs(rawHandle - Math.Round(rawHandle)) <= 0.0000001)
+                    {
+                        object? resolved = mod.Handles.Get((int)rawHandle);
+                        if (resolved == null)
+                            return null;
+                        if (effectiveType.IsInstanceOfType(resolved) || effectiveType == typeof(object))
+                            return resolved;
+                    }
                 }
 
                 if (TryCreateUnityValue(value.Table, effectiveType, out object? unityValue))
@@ -98,6 +104,19 @@ namespace SleddersLuaRuntime.Api
             }
 
             Type sourceType = value.GetType();
+            if (value is double d)
+            {
+                if (double.IsNaN(d) || double.IsInfinity(d))
+                    throw new ScriptRuntimeException("Numeric values must be finite.");
+                if (IsIntegralType(effectiveType) || effectiveType.IsEnum)
+                {
+                    if (Math.Abs(d - Math.Round(d)) > 0.0000001)
+                        throw new ScriptRuntimeException("This property expects an integer value.");
+                }
+                if (effectiveType == typeof(bool))
+                    throw new ScriptRuntimeException("Boolean properties expect true or false, not a number.");
+            }
+
             if (effectiveType.IsAssignableFrom(sourceType) || effectiveType == typeof(object))
                 return value;
 
@@ -148,32 +167,57 @@ namespace SleddersLuaRuntime.Api
                 stack.Add(table);
                 try
                 {
-                    bool arrayLike = true;
+                    const int MaxStorageEntries = 65536;
+                    int pairCount = 0;
+                    bool allNumeric = true;
+                    bool allString = true;
                     int maxIndex = 0;
+                    var numericKeys = new HashSet<int>();
                     foreach (var pair in table.Pairs)
                     {
-                        if (pair.Key.Type != DataType.Number || pair.Key.Number < 1 || Math.Abs(pair.Key.Number - Math.Round(pair.Key.Number)) > 0.00001)
+                        pairCount++;
+                        if (pairCount > MaxStorageEntries)
+                            throw new ScriptRuntimeException("Lua storage table is too large (maximum 65536 entries).");
+
+                        if (pair.Key.Type == DataType.Number)
                         {
-                            arrayLike = false;
-                            break;
+                            double raw = pair.Key.Number;
+                            if (double.IsNaN(raw) || double.IsInfinity(raw) || raw < 1 || raw > MaxStorageEntries ||
+                                Math.Abs(raw - Math.Round(raw)) > 0.00001)
+                                throw new ScriptRuntimeException("Lua storage array indices must be contiguous integers from 1 to 65536.");
+                            int index = (int)raw;
+                            numericKeys.Add(index);
+                            maxIndex = Math.Max(maxIndex, index);
+                            allString = false;
                         }
-                        maxIndex = Math.Max(maxIndex, (int)pair.Key.Number);
+                        else if (pair.Key.Type == DataType.String)
+                        {
+                            allNumeric = false;
+                        }
+                        else
+                        {
+                            throw new ScriptRuntimeException("Lua storage object keys must be strings; arrays must use integer indices.");
+                        }
                     }
 
-                    if (arrayLike)
+                    if (allNumeric)
                     {
-                        var list = new List<object?>();
+                        if (maxIndex != pairCount || numericKeys.Count != pairCount)
+                            throw new ScriptRuntimeException("Lua storage arrays must use contiguous indices starting at 1.");
+                        var list = new List<object?>(maxIndex);
                         for (int i = 1; i <= maxIndex; i++)
                             list.Add(DynToPlain(table.Get(i), stack, depth + 1));
                         return list;
                     }
 
+                    if (!allString)
+                        throw new ScriptRuntimeException("Lua storage tables cannot mix array indices and string keys.");
+
                     var dict = new Dictionary<string, object?>(StringComparer.Ordinal);
                     foreach (var pair in table.Pairs)
                     {
-                        string key = pair.Key.Type == DataType.String ? pair.Key.String : pair.Key.ToPrintString();
-                        if (key == "__handle")
-                            continue;
+                        string key = pair.Key.String;
+                        if (key == "__handle") continue;
                         dict[key] = DynToPlain(pair.Value, stack, depth + 1);
                     }
                     return dict;
@@ -214,7 +258,11 @@ namespace SleddersLuaRuntime.Api
             {
                 DynValue component = table.Get(member);
                 if (component.Type == DataType.Number)
+                {
+                    if (double.IsNaN(component.Number) || double.IsInfinity(component.Number))
+                        throw new ScriptRuntimeException("Cannot persist a semantic value containing NaN or infinity.");
                     dict[member] = component.Number;
+                }
             }
             value = dict;
             return true;
@@ -333,6 +381,8 @@ namespace SleddersLuaRuntime.Api
                 DynValue dyn = table.Get(member);
                 if (dyn.Type != DataType.Number)
                     continue;
+                if (double.IsNaN(dyn.Number) || double.IsInfinity(dyn.Number))
+                    throw new ScriptRuntimeException("Vector/color components must be finite numbers.");
                 WriteFieldOrProperty(boxed, member, Convert.ToSingle(dyn.Number, CultureInfo.InvariantCulture));
             }
             value = boxed;
@@ -362,6 +412,13 @@ namespace SleddersLuaRuntime.Api
             FieldInfo? field = type.GetField(name, flags);
             if (field != null && !field.IsInitOnly)
                 field.SetValue(target, ChangeType(value, field.FieldType));
+        }
+
+        private static bool IsIntegralType(Type type)
+        {
+            type = Nullable.GetUnderlyingType(type) ?? type;
+            return type == typeof(byte) || type == typeof(sbyte) || type == typeof(short) || type == typeof(ushort) ||
+                   type == typeof(int) || type == typeof(uint) || type == typeof(long) || type == typeof(ulong);
         }
 
         private static bool IsNumber(Type type)

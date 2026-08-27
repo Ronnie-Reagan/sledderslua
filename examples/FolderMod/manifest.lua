@@ -3,5 +3,5 @@ return {
     name = "Folder Mod Example",
     author = "Example",
     version = "1.0.0",
-    api = "3.1"
+    api = "3.2"
 }
